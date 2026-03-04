@@ -10,6 +10,7 @@
     "build": "npm run build:server && npm run build:client",
     "build:server": "cd server && npm run build",
     "build:client": "cd client && npm run build",
+    "build:static": "cd client && npm install && npm run build",
     "start": "cd server && npm start",
     "prisma:generate": "cd server && npx prisma generate",
     "prisma:migrate": "cd server && npx prisma migrate dev",

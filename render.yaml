@@ -3,10 +3,10 @@ services:
     name: workers-marketplace-client
     env: static
     rootDirectory: client
-    buildCommand: npm install && npm run build
+    buildCommand: npm run build:static
     staticPublishPath: dist
     envVars:
       - key: NODE_ENV
         value: production
       - key: VITE_API_URL
-        value: https://workers-marketplace-server.onrender.com
+        value: https://workersplace.onrender.com
