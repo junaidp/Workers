@@ -122,9 +122,10 @@ router.get('/my-jobs', authenticate, authorize('CUSTOMER'), async (req: AuthRequ
 router.get('/:jobId', authenticate, async (req: AuthRequest, res) => {
   try {
     const { jobId } = req.params;
+    const jobIdString = Array.isArray(jobId) ? jobId[0] : jobId;
 
     const job = await prisma.job.findUnique({
-      where: { jobId },
+      where: { jobId: jobIdString },
       include: {
         customer: {
           include: {
@@ -176,6 +177,7 @@ router.get('/:jobId', authenticate, async (req: AuthRequest, res) => {
 router.post('/:jobId/accept', authenticate, authorize('TRADESMAN'), async (req: AuthRequest, res) => {
   try {
     const { jobId } = req.params;
+    const jobIdString = Array.isArray(jobId) ? jobId[0] : jobId;
 
     const tradesman = await prisma.tradesman.findUnique({
       where: { userId: req.user!.userId },
@@ -195,7 +197,7 @@ router.post('/:jobId/accept', authenticate, authorize('TRADESMAN'), async (req: 
     }
 
     const job = await prisma.job.findUnique({
-      where: { jobId },
+      where: { jobId: jobIdString },
       include: {
         customer: {
           include: {
@@ -253,7 +255,7 @@ router.post('/:jobId/accept', authenticate, authorize('TRADESMAN'), async (req: 
           tradesmanId: tradesman.id,
           amount: -1,
           type: 'JOB_ACCEPTANCE',
-          description: `Job ${jobId} acceptance`,
+          description: `Job ${jobIdString} acceptance`,
           balanceBefore: tradesman.prepaidCredit,
           balanceAfter: tradesman.prepaidCredit - 1
         }
@@ -279,15 +281,15 @@ router.post('/:jobId/accept', authenticate, authorize('TRADESMAN'), async (req: 
 
     await sendWhatsApp(
       customerContact.whatsapp,
-      `Tradesman ${tradesman.tradesmanId} has accepted your job (${jobId})!\n\nContact: ${tradesmanContact.mobile}\nWhatsApp: ${tradesmanContact.whatsapp}`
+      `Tradesman ${tradesman.tradesmanId} has accepted your job (${jobIdString})!\n\nContact: ${tradesmanContact.mobile}\nWhatsApp: ${tradesmanContact.whatsapp}`
     );
 
     await sendWhatsApp(
       tradesmanContact.whatsapp,
-      `You accepted job ${jobId}.\n\nCustomer: ${job.customer.fullName}\nMobile: ${job.customer.user.mobile}\nWhatsApp: ${customerContact.whatsapp}`
+      `You accepted job ${jobIdString}.\n\nCustomer: ${job.customer.fullName}\nMobile: ${job.customer.user.mobile}\nWhatsApp: ${customerContact.whatsapp}`
     );
 
-    const otherResponses = job.responses.filter(r => r.tradesmanId !== tradesman.id && r.status === 'PENDING');
+    const otherResponses = job.responses.filter((r: any) => r.tradesmanId !== tradesman.id && r.status === 'PENDING');
     for (const response of otherResponses) {
       const otherTradesman = await prisma.tradesman.findUnique({
         where: { id: response.tradesmanId },
@@ -296,7 +298,7 @@ router.post('/:jobId/accept', authenticate, authorize('TRADESMAN'), async (req: 
       if (otherTradesman) {
         await sendWhatsApp(
           otherTradesman.user.whatsapp!,
-          `Job ${jobId}: ${job.acceptedCount + 1} tradesman(s) have accepted. Act fast!`
+          `Job ${jobIdString}: ${job.acceptedCount + 1} tradesman(s) have accepted. Act fast!`
         );
       }
     }
@@ -311,6 +313,7 @@ router.post('/:jobId/accept', authenticate, authorize('TRADESMAN'), async (req: 
 router.post('/:jobId/decline', authenticate, authorize('TRADESMAN'), async (req: AuthRequest, res) => {
   try {
     const { jobId } = req.params;
+    const jobIdString = Array.isArray(jobId) ? jobId[0] : jobId;
 
     const tradesman = await prisma.tradesman.findUnique({
       where: { userId: req.user!.userId }
@@ -321,7 +324,7 @@ router.post('/:jobId/decline', authenticate, authorize('TRADESMAN'), async (req:
     }
 
     const job = await prisma.job.findUnique({
-      where: { jobId }
+      where: { jobId: jobIdString }
     });
 
     if (!job) {

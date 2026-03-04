@@ -160,6 +160,7 @@ router.put('/category/:id', authenticate, authorize('ADMIN'), upload.single('ima
     const { id } = req.params;
     const { name, description, isActive, order } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     const updateData: any = {};
     if (name) updateData.name = name;
@@ -169,7 +170,7 @@ router.put('/category/:id', authenticate, authorize('ADMIN'), upload.single('ima
     if (image) updateData.image = image;
 
     const category = await prisma.serviceCategory.update({
-      where: { id },
+      where: { id: idString },
       data: updateData
     });
 
@@ -185,6 +186,7 @@ router.put('/service/:id', authenticate, authorize('ADMIN'), upload.single('imag
     const { id } = req.params;
     const { name, description, isActive, order } = req.body;
     const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     const updateData: any = {};
     if (name) updateData.name = name;
@@ -194,7 +196,7 @@ router.put('/service/:id', authenticate, authorize('ADMIN'), upload.single('imag
     if (image) updateData.image = image;
 
     const service = await prisma.service.update({
-      where: { id },
+      where: { id: idString },
       data: updateData
     });
 

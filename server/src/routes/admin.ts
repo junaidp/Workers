@@ -72,9 +72,10 @@ router.get('/tradesmen/pending', authenticate, authorize('ADMIN'), async (req: A
 router.post('/tradesman/:id/approve', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     const tradesman = await prisma.tradesman.findUnique({
-      where: { id },
+      where: { id: idString },
       include: { user: true }
     });
 
@@ -85,7 +86,7 @@ router.post('/tradesman/:id/approve', authenticate, authorize('ADMIN'), async (r
     const tradesmanId = await generateTradesmanId();
 
     await prisma.tradesman.update({
-      where: { id },
+      where: { id: idString },
       data: {
         tradesmanId,
         isApproved: true,
@@ -117,9 +118,10 @@ router.post('/tradesman/:id/reject', authenticate, authorize('ADMIN'), async (re
   try {
     const { id } = req.params;
     const { reason } = req.body;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     const tradesman = await prisma.tradesman.findUnique({
-      where: { id },
+      where: { id: idString },
       include: { user: true }
     });
 
@@ -128,7 +130,7 @@ router.post('/tradesman/:id/reject', authenticate, authorize('ADMIN'), async (re
     }
 
     await prisma.tradesman.update({
-      where: { id },
+      where: { id: idString },
       data: {
         verificationStatus: 'REJECTED'
       }
@@ -158,18 +160,19 @@ router.put('/tradesman/:id', authenticate, authorize('ADMIN'), async (req: AuthR
   try {
     const { id } = req.params;
     const { badge, isVisible, prepaidCredit } = req.body;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     const updateData: any = {};
     if (badge) updateData.badge = badge;
     if (isVisible !== undefined) updateData.isVisible = isVisible;
     if (prepaidCredit !== undefined) {
-      const tradesman = await prisma.tradesman.findUnique({ where: { id } });
+      const tradesman = await prisma.tradesman.findUnique({ where: { id: idString } });
       if (tradesman) {
         updateData.prepaidCredit = parseInt(prepaidCredit);
         
         await prisma.creditTransaction.create({
           data: {
-            tradesmanId: id,
+            tradesmanId: idString,
             amount: parseInt(prepaidCredit) - tradesman.prepaidCredit,
             type: 'ADMIN_ADJUSTMENT',
             description: 'Admin credit adjustment',
@@ -181,7 +184,7 @@ router.put('/tradesman/:id', authenticate, authorize('ADMIN'), async (req: AuthR
     }
 
     const tradesman = await prisma.tradesman.update({
-      where: { id },
+      where: { id: idString },
       data: updateData
     });
 
@@ -234,9 +237,10 @@ router.put('/user/:id/status', authenticate, authorize('ADMIN'), async (req: Aut
   try {
     const { id } = req.params;
     const { isActive } = req.body;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     await prisma.user.update({
-      where: { id },
+      where: { id: idString },
       data: { isActive }
     });
 
@@ -250,17 +254,24 @@ router.put('/user/:id/status', authenticate, authorize('ADMIN'), async (req: Aut
 router.get('/fake-lead-reports', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
   try {
     const reports = await prisma.fakeLeadReport.findMany({
-      include: {
-        tradesman: {
-          include: {
-            user: true
-          }
-        }
-      },
       orderBy: { createdAt: 'desc' }
     });
 
-    res.json(reports);
+    // Manually fetch tradesman data for each report
+    const reportsWithTradesman = await Promise.all(
+      reports.map(async (report) => {
+        const tradesman = await prisma.tradesman.findUnique({
+          where: { id: report.tradesmanId },
+          include: { user: true }
+        });
+        return {
+          ...report,
+          tradesman
+        };
+      })
+    );
+
+    res.json(reportsWithTradesman);
   } catch (error) {
     console.error('Get fake lead reports error:', error);
     res.status(500).json({ message: 'Failed to get reports' });
@@ -271,9 +282,10 @@ router.post('/fake-lead-report/:id/resolve', authenticate, authorize('ADMIN'), a
   try {
     const { id } = req.params;
     const { refund } = req.body;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     const report = await prisma.fakeLeadReport.findUnique({
-      where: { id }
+      where: { id: idString }
     });
 
     if (!report) {
@@ -307,7 +319,7 @@ router.post('/fake-lead-report/:id/resolve', authenticate, authorize('ADMIN'), a
     }
 
     await prisma.fakeLeadReport.update({
-      where: { id },
+      where: { id: idString },
       data: {
         isResolved: true,
         refunded: refund
@@ -337,9 +349,10 @@ router.get('/contact-messages', authenticate, authorize('ADMIN'), async (req: Au
 router.put('/contact-message/:id/resolve', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
 
     await prisma.contactMessage.update({
-      where: { id },
+      where: { id: idString },
       data: { isResolved: true }
     });
 
