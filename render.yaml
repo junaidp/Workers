@@ -2,8 +2,9 @@ services:
   - type: web
     name: workers-marketplace-client
     env: static
-    buildCommand: cd client && npm install && npm run build
-    staticPublishPath: client/dist
+    rootDirectory: client
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     envVars:
       - key: NODE_ENV
         value: production
