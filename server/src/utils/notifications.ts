@@ -1,56 +1,57 @@
-import nodemailer from 'nodemailer';
-import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import dns from 'dns';
-import sgMail from '@sendgrid/mail';
-sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
-// Create transporter with explicit Gmail SMTP configuration
-if ('setDefaultResultOrder' in dns && typeof dns.setDefaultResultOrder === 'function') {
-  dns.setDefaultResultOrder('ipv4first');
-}
+import { Resend } from 'resend';
 
-const transportOptions: SMTPTransport.Options = {
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  tls: {
-    rejectUnauthorized: false
-  },
-  // Additional connection options
-  connectionTimeout: 30000,
-  greetingTimeout: 10000,
-  socketTimeout: 30000
-};
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  console.log(`📧 Sending email to ${to} via SendGrid...`);
+  if (!resend) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
 
-  const msg = {
-    to,
-    from: process.env.EMAIL_FROM!,
-    subject,
-    text: html.replace(/<[^>]+>/g, ''),
-    html,
-  };
+  const fromAddress = process.env.EMAIL_FROM;
+  if (!fromAddress) {
+    throw new Error('EMAIL_FROM is not configured');
+  }
+
+  console.log('📧 Email Configuration:');
+  console.log(`   - Provider: Resend`);
+  console.log(`   - From: ${fromAddress}`);
+  console.log(`   - To: ${to}`);
+  console.log(`   - Subject: ${subject}`);
+
+  const textFallback = html.replace(/<[^>]+>/g, '').trim();
 
   try {
-    await sgMail.send(msg);
-    console.log('Email sent');
+    await resend.emails.send({
+      from: fromAddress,
+      to,
+      subject,
+      html,
+      text: textFallback || undefined
+    });
+    console.log('✅ Email sent');
   } catch (error) {
-    console.error(error);
+    console.error('❌ Resend email error:', error);
     throw error;
   }
 }
 
+
+
+
+
+
+
 export async function verifyEmailConnection() {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.error('❌ SENDGRID_API_KEY not configured');
+  if (!resendApiKey) {
+    console.error('❌ RESEND_API_KEY not configured');
     return false;
   }
-  console.log('✅ SendGrid API key configured');
+  if (!process.env.EMAIL_FROM) {
+    console.error('❌ EMAIL_FROM not configured');
+    return false;
+  }
+  console.log('✅ Resend email provider configured');
   return true;
 }
 
