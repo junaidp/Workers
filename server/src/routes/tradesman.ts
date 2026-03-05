@@ -40,6 +40,7 @@ router.post('/register', upload.fields([
     } = req.body;
 
     console.log('📝 Request data received:', { firstName, lastName, email, businessName, mobile });
+    console.log(`📧 EMAIL VALUE FROM REQUEST: "${email}" (type: ${typeof email}, length: ${email?.length})`);
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     console.log('📁 Files received:', Object.keys(files || {}));
@@ -160,7 +161,10 @@ router.post('/register', upload.fields([
     // Send WhatsApp (non-blocking)
     sendWhatsApp(user.whatsapp!, `Welcome! Verify your account: ${whatsappVerificationLink}`).catch(console.error);
 
+    console.log(`📧 CHECKING EMAIL CONDITION: email="${email}", truthy=${!!email}`);
+    
     if (email) {
+      console.log(`📧 EMAIL CONDITION MET - Sending verification email to: ${email}`);
       const emailVerificationToken = uuidv4();
       await prisma.verificationToken.create({
         data: {
@@ -180,6 +184,8 @@ router.post('/register', upload.fields([
         console.error('❌ Failed to send verification email:', emailError);
         // Continue with registration but note the email issue
       }
+    } else {
+      console.log('📧 EMAIL CONDITION NOT MET - No email provided by user');
     }
 
     const admins = await prisma.admin.findMany({

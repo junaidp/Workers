@@ -1,6 +1,10 @@
 import nodemailer from 'nodemailer';
 
+// Create transporter with proper Gmail SMTP configuration
 const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
@@ -9,8 +13,24 @@ const transporter = nodemailer.createTransport({
     rejectUnauthorized: false
   },
   // Force IPv4 to avoid IPv6 connection issues
-  family: 4
-} as any);
+  family: 4,
+  // Additional connection options
+  connectionTimeout: 30000,
+  greetingTimeout: 10000,
+  socketTimeout: 30000
+});
+
+// Verify transporter connection on startup
+export async function verifyEmailConnection() {
+  try {
+    await transporter.verify();
+    console.log('✅ Email transporter connection verified successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Email transporter connection failed:', error);
+    return false;
+  }
+}
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {

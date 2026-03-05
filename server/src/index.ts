@@ -14,6 +14,7 @@ import adminRoutes from './routes/admin.js';
 import contactRoutes from './routes/contact.js';
 import creditRoutes from './routes/credit.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { verifyEmailConnection } from './utils/notifications.js';
 import { startJobMonitoring } from './services/jobMonitor.js';
 
 const app = express();
@@ -59,6 +60,9 @@ async function startServer() {
   try {
     await prisma.$connect();
     console.log('Database connected successfully');
+
+    // Verify email connection
+    await verifyEmailConnection();
 
     startJobMonitoring();
     
