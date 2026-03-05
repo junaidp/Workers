@@ -157,7 +157,7 @@ router.post('/register', upload.fields([
 
     const whatsappVerificationLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}&type=whatsapp`;
     
-    // Send WhatsApp asynchronously (don't wait for it)
+    // Send WhatsApp (non-blocking)
     sendWhatsApp(user.whatsapp!, `Welcome! Verify your account: ${whatsappVerificationLink}`).catch(console.error);
 
     if (email) {
@@ -171,15 +171,21 @@ router.post('/register', upload.fields([
         }
       });
       
-      // Send email asynchronously (don't wait for it)
-      sendEmail(email, 'Verify Your Email', `Click to verify: ${process.env.FRONTEND_URL}/verify?token=${emailVerificationToken}&type=email`).catch(console.error);
+      // Send email synchronously - user needs this to verify account
+      try {
+        await sendEmail(email, 'Verify Your Email', `Click to verify: ${process.env.FRONTEND_URL}/verify?token=${emailVerificationToken}&type=email`);
+        console.log('✅ Verification email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Failed to send verification email:', emailError);
+        // Continue with registration but note the email issue
+      }
     }
 
     const admins = await prisma.admin.findMany({
       include: { user: true }
     });
 
-    // Send admin notifications asynchronously
+    // Send admin notifications (non-blocking)
     for (const admin of admins) {
       if (admin.user.email) {
         sendEmail(
@@ -191,9 +197,18 @@ router.post('/register', upload.fields([
     }
 
     console.log('📧 Notifications sent, sending response...');
+    
+    const emailSent = email ? true : false; // Track if email was attempted
+    const responseMessage = emailSent 
+      ? 'Registration submitted successfully! Please check your email for verification link and wait for admin approval.'
+      : 'Registration submitted successfully! Your account is pending verification. Please contact support or wait for admin approval.';
+    
     res.status(201).json({
-      message: 'Registration submitted successfully. Please verify your account and wait for admin approval.',
-      userId: user.id
+      message: responseMessage,
+      userId: user.id,
+      emailVerificationSent: emailSent,
+      whatsappVerificationSent: true,
+      verificationToken: verificationToken // Include for manual verification if needed
     });
     
     console.log('✅ Registration completed successfully');

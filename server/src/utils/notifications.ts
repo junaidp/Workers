@@ -15,25 +15,38 @@ const transporter = nodemailer.createTransport({
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
-    // Add timeout to prevent hanging (increased to 30 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Email sending timeout')), 30000);
+    console.log(`📧 Sending email to ${to}...`);
+    
+    const result = await transporter.sendMail({
+      from: process.env.EMAIL_FROM,
+      to,
+      subject,
+      html,
     });
-
-    await Promise.race([
-      transporter.sendMail({
+    
+    console.log(`✅ Email sent successfully to ${to}`);
+    console.log(`Message ID: ${result.messageId}`);
+    return result;
+    
+  } catch (error) {
+    console.error(`❌ Failed to send email to ${to}:`, error);
+    console.error('Error details:', error.message);
+    
+    // Retry once more if it fails
+    try {
+      console.log(`🔄 Retrying email to ${to}...`);
+      const retryResult = await transporter.sendMail({
         from: process.env.EMAIL_FROM,
         to,
         subject,
         html,
-      }),
-      timeoutPromise
-    ]);
-    
-    console.log(`Email sent to ${to}`);
-  } catch (error) {
-    console.error('Error sending email:', error);
-    // Don't throw error, just log it
+      });
+      console.log(`✅ Email sent on retry to ${to}`);
+      return retryResult;
+    } catch (retryError) {
+      console.error(`❌ Email retry failed for ${to}:`, retryError);
+      throw retryError;
+    }
   }
 }
 
