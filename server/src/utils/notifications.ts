@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import dns from 'dns';
 
 // Create transporter with explicit Gmail SMTP configuration
 const transportOptions: SMTPTransport.Options & { family?: number } = {
@@ -15,6 +16,8 @@ const transportOptions: SMTPTransport.Options & { family?: number } = {
   },
   // Force IPv4 to avoid IPv6 connection issues
   family: 4,
+  lookup: (hostname, _options, callback) =>
+    dns.lookup(hostname, { family: 4, all: false }, callback),
   // Additional connection options
   connectionTimeout: 30000,
   greetingTimeout: 10000,
