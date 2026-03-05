@@ -25,24 +25,22 @@ const transportOptions: SMTPTransport.Options = {
   socketTimeout: 30000
 };
 
-const transporter = nodemailer.createTransport(transportOptions);
-
 export async function sendEmail(to: string, subject: string, html: string) {
+  console.log(`📧 Sending email to ${to} via SendGrid...`);
+
+  const msg = {
+    to,
+    from: process.env.EMAIL_FROM!,
+    subject,
+    text: html.replace(/<[^>]+>/g, ''),
+    html,
+  };
+
   try {
-    console.log(`📧 Sending email to ${to} via SendGrid...`);
-
-    const msg = {
-      to,
-      from: process.env.EMAIL_FROM!,
-      subject,
-      html,
-    };
-
     await sgMail.send(msg);
-    console.log(`✅ Email sent successfully to ${to}`);
-
+    console.log('Email sent');
   } catch (error) {
-    console.error(`❌ Failed to send email to ${to}:`, error);
+    console.error(error);
     throw error;
   }
 }
