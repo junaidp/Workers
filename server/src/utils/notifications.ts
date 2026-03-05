@@ -10,11 +10,23 @@ const transporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  // Force IPv4 to avoid IPv6 connection issues
+  family: 4
 });
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
+    // Log all email configuration details (without password)
+    console.log(`📧 Email Configuration:`);
+    console.log(`   - Host: ${process.env.EMAIL_HOST}`);
+    console.log(`   - Port: ${process.env.EMAIL_PORT}`);
+    console.log(`   - From: ${process.env.EMAIL_FROM}`);
+    console.log(`   - User: ${process.env.EMAIL_USER}`);
+    console.log(`   - To: ${to}`);
+    console.log(`   - Subject: ${subject}`);
+    console.log(`   - Password: ${process.env.EMAIL_PASSWORD ? '[SET]' : '[NOT SET]'}`);
+    
     console.log(`📧 Sending email to ${to}...`);
     
     const result = await transporter.sendMail({
