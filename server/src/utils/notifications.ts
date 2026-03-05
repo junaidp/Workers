@@ -1,7 +1,8 @@
 import nodemailer from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import dns from 'dns';
-
+import sgMail from '@sendgrid/mail';
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 // Create transporter with explicit Gmail SMTP configuration
 if ('setDefaultResultOrder' in dns && typeof dns.setDefaultResultOrder === 'function') {
   dns.setDefaultResultOrder('ipv4first');
@@ -40,48 +41,31 @@ export async function verifyEmailConnection() {
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
-    // Log all email configuration details (without password)
-    console.log(`📧 Email Configuration:`);
-    console.log(`   - Host: smtp.gmail.com`);
-    console.log(`   - Port: 587`);
-    console.log(`   - From: ${process.env.EMAIL_FROM}`);
-    console.log(`   - User: ${process.env.EMAIL_USER}`);
-    console.log(`   - To: ${to}`);
-    console.log(`   - Subject: ${subject}`);
-    console.log(`   - Password: ${process.env.EMAIL_PASSWORD ? '[SET]' : '[NOT SET]'}`);
-    
-    console.log(`📧 Sending email to ${to}...`);
-    
-    const result = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+    console.log(`📧 Sending email to ${to} via SendGrid...`);
+
+    const msg = {
       to,
+      from: process.env.EMAIL_FROM!,
       subject,
       html,
-    });
-    
+    };
+
+    await sgMail.send(msg);
     console.log(`✅ Email sent successfully to ${to}`);
-    console.log(`Message ID: ${result.messageId}`);
-    return result;
-    
+
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
-
-    // Retry once more if it fails
-    try {
-      console.log(`🔄 Retrying email to ${to}...`);
-      const retryResult = await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to,
-        subject,
-        html,
-      });
-      console.log(`✅ Email sent on retry to ${to}`);
-      return retryResult;
-    } catch (retryError) {
-      console.error(`❌ Email retry failed for ${to}:`, retryError);
-      throw retryError;
-    }
+    throw error;
   }
+}
+
+export async function verifyEmailConnection() {
+  if (!process.env.SENDGRID_API_KEY) {
+    console.error('❌ SENDGRID_API_KEY not configured');
+    return false;
+  }
+  console.log('✅ SendGrid API key configured');
+  return true;
 }
 
 export async function sendWhatsApp(phoneNumber: string, message: string) {
