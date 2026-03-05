@@ -173,6 +173,7 @@ router.post('/register', upload.fields([
       
       // Send email synchronously - user needs this to verify account
       try {
+        console.log(`📧 Sending USER VERIFICATION email to: ${email}`);
         await sendEmail(email, 'Verify Your Email', `Click to verify: ${process.env.FRONTEND_URL}/verify?token=${emailVerificationToken}&type=email`);
         console.log('✅ Verification email sent successfully');
       } catch (emailError) {
@@ -188,6 +189,7 @@ router.post('/register', upload.fields([
     // Send admin notifications (non-blocking)
     for (const admin of admins) {
       if (admin.user.email) {
+        console.log(`📧 Sending ADMIN notification email to: ${admin.user.email}`);
         sendEmail(
           admin.user.email,
           'New Tradesman Registration',
