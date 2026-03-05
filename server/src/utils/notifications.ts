@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
@@ -11,13 +10,14 @@ const transporter = nodemailer.createTransport({
   },
   // Force IPv4 to avoid IPv6 connection issues
   family: 4
-});
+} as any);
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
     // Log all email configuration details (without password)
     console.log(`📧 Email Configuration:`);
-    console.log(`   - Service: gmail`);
+    console.log(`   - Host: smtp.gmail.com`);
+    console.log(`   - Port: 587`);
     console.log(`   - From: ${process.env.EMAIL_FROM}`);
     console.log(`   - User: ${process.env.EMAIL_USER}`);
     console.log(`   - To: ${to}`);
