@@ -12,7 +12,9 @@
     "prisma:studio": "prisma studio",
     "db:reset": "npx prisma migrate reset --force",
     "db:seed": "tsx src/utils/seedData.ts",
-    "db:clean-seed": "npm run db:reset && npm run db:seed"
+    "db:clean-seed": "npm run db:reset && npm run db:seed",
+    "test:email": "tsx src/testEmail.ts",
+    "test:email:direct": "tsx src/testEmailDirect.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

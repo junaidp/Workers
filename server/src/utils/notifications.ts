@@ -3,18 +3,21 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
   port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: false,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging (increased to 30 seconds)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Email sending timeout')), 10000);
+      setTimeout(() => reject(new Error('Email sending timeout')), 30000);
     });
 
     await Promise.race([
