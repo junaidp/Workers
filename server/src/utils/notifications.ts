@@ -30,8 +30,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     
   } catch (error) {
     console.error(`❌ Failed to send email to ${to}:`, error);
-    console.error('Error details:', error.message);
-    
+
     // Retry once more if it fails
     try {
       console.log(`🔄 Retrying email to ${to}...`);
