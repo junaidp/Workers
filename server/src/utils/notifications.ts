@@ -3,7 +3,11 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import dns from 'dns';
 
 // Create transporter with explicit Gmail SMTP configuration
-const transportOptions: SMTPTransport.Options & { family?: number } = {
+if ('setDefaultResultOrder' in dns && typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
+const transportOptions: SMTPTransport.Options = {
   host: 'smtp.gmail.com',
   port: 587,
   secure: false,
@@ -14,10 +18,6 @@ const transportOptions: SMTPTransport.Options & { family?: number } = {
   tls: {
     rejectUnauthorized: false
   },
-  // Force IPv4 to avoid IPv6 connection issues
-  family: 4,
-  lookup: (hostname, _options, callback) =>
-    dns.lookup(hostname, { family: 4, all: false }, callback),
   // Additional connection options
   connectionTimeout: 30000,
   greetingTimeout: 10000,
