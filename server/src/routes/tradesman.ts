@@ -18,6 +18,8 @@ router.post('/register', upload.fields([
   { name: 'certifications', maxCount: 5 }
 ]), async (req, res) => {
   try {
+    console.log('🔄 Tradesman registration started');
+    
     const {
       firstName,
       lastName,
@@ -37,7 +39,10 @@ router.post('/register', upload.fields([
       certificationTitles
     } = req.body;
 
+    console.log('📝 Request data received:', { firstName, lastName, email, businessName, mobile });
+
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    console.log('📁 Files received:', Object.keys(files || {}));
 
     if (!firstName || !lastName || !businessName || !town || !city || !description || 
         !whatsapp || !mobile || !cnicNumber || !files.profilePicture || 
@@ -53,6 +58,8 @@ router.post('/register', upload.fields([
       return res.status(400).json({ message: 'Invalid CNIC format' });
     }
 
+    console.log('✅ Validation passed');
+
     const existingUser = await prisma.user.findFirst({
       where: { 
         OR: [
@@ -66,6 +73,7 @@ router.post('/register', upload.fields([
       return res.status(400).json({ message: 'User already exists with this mobile or email' });
     }
 
+    console.log('👤 Creating user...');
     const user = await prisma.user.create({
       data: {
         firstName,
@@ -78,10 +86,13 @@ router.post('/register', upload.fields([
       }
     });
 
+    console.log('✅ User created:', user.id);
+
     const businessAddress = [buildingNumber, street, town, city, country || 'Pakistan']
       .filter(Boolean)
       .join(', ');
 
+    console.log('🏢 Creating tradesman profile...');
     const tradesman = await prisma.tradesman.create({
       data: {
         userId: user.id,
@@ -109,6 +120,8 @@ router.post('/register', upload.fields([
         }
       }
     });
+
+    console.log('✅ Tradesman created:', tradesman.id);
 
     if (files.portfolioImages) {
       await prisma.portfolioImage.createMany({
@@ -143,7 +156,9 @@ router.post('/register', upload.fields([
     });
 
     const whatsappVerificationLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}&type=whatsapp`;
-    await sendWhatsApp(user.whatsapp!, `Welcome! Verify your account: ${whatsappVerificationLink}`);
+    
+    // Send WhatsApp asynchronously (don't wait for it)
+    sendWhatsApp(user.whatsapp!, `Welcome! Verify your account: ${whatsappVerificationLink}`).catch(console.error);
 
     if (email) {
       const emailVerificationToken = uuidv4();
@@ -155,27 +170,33 @@ router.post('/register', upload.fields([
           expiresAt
         }
       });
-      await sendEmail(email, 'Verify Your Email', `Click to verify: ${process.env.FRONTEND_URL}/verify?token=${emailVerificationToken}&type=email`);
+      
+      // Send email asynchronously (don't wait for it)
+      sendEmail(email, 'Verify Your Email', `Click to verify: ${process.env.FRONTEND_URL}/verify?token=${emailVerificationToken}&type=email`).catch(console.error);
     }
 
     const admins = await prisma.admin.findMany({
       include: { user: true }
     });
 
+    // Send admin notifications asynchronously
     for (const admin of admins) {
       if (admin.user.email) {
-        await sendEmail(
+        sendEmail(
           admin.user.email,
           'New Tradesman Registration',
           `New tradesman registration pending approval: ${businessName}`
-        );
+        ).catch(console.error);
       }
     }
 
+    console.log('📧 Notifications sent, sending response...');
     res.status(201).json({
       message: 'Registration submitted successfully. Please verify your account and wait for admin approval.',
       userId: user.id
     });
+    
+    console.log('✅ Registration completed successfully');
   } catch (error) {
     console.error('Tradesman registration error:', error);
     res.status(500).json({ message: 'Registration failed' });

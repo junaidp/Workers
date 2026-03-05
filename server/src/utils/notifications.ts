@@ -12,15 +12,25 @@ const transporter = nodemailer.createTransport({
 
 export async function sendEmail(to: string, subject: string, html: string) {
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to,
-      subject,
-      html,
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email sending timeout')), 10000);
     });
+
+    await Promise.race([
+      transporter.sendMail({
+        from: process.env.EMAIL_FROM,
+        to,
+        subject,
+        html,
+      }),
+      timeoutPromise
+    ]);
+    
     console.log(`Email sent to ${to}`);
   } catch (error) {
     console.error('Error sending email:', error);
+    // Don't throw error, just log it
   }
 }
 
