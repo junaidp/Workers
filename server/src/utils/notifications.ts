@@ -1,7 +1,11 @@
 import nodemailer from 'nodemailer';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
-// Create transporter with proper Gmail SMTP configuration
-const transporter = nodemailer.createTransport({
+// Create transporter with explicit Gmail SMTP configuration
+const transportOptions: SMTPTransport.Options & { family?: number } = {
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
@@ -14,10 +18,10 @@ const transporter = nodemailer.createTransport({
   // Additional connection options
   connectionTimeout: 30000,
   greetingTimeout: 10000,
-  socketTimeout: 30000,
-  // Explicitly set service to use Gmail's SMTP
-  service: 'gmail'
-} as any);
+  socketTimeout: 30000
+};
+
+const transporter = nodemailer.createTransport(transportOptions);
 
 // Verify transporter connection on startup
 export async function verifyEmailConnection() {

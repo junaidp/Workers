@@ -372,7 +372,7 @@ async function seedAdmin() {
   if (!existingAdmin) {
     const adminUser = await prisma.user.create({
       data: {
-        email: 'admin@workersmarketplace.com',
+        email: 'junaidp2@hotmail.com',
         mobile: '3001234567',
         whatsapp: '+923001234567',
         role: 'ADMIN',
