@@ -34,6 +34,7 @@ router.post('/register', upload.fields([
       whatsapp,
       mobile,
       landline,
+      website,
       cnicNumber,
       serviceIds,
       certificationTitles
@@ -112,6 +113,7 @@ router.post('/register', upload.fields([
         profilePicture: `/uploads/${files.profilePicture[0].filename}`,
         tradeLicense: files.tradeLicense ? `/uploads/${files.tradeLicense[0].filename}` : null,
         landline: landline || null,
+        website: website || null,
         verificationStatus: 'PENDING',
         isApproved: false,
         services: {

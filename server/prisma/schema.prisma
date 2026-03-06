@@ -93,6 +93,7 @@ model Tradesman {
   profilePicture     String
   tradeLicense       String?
   landline           String?
+  website            String?
   badge              TradesmanBadge     @default(VERIFIED)
   verificationStatus VerificationStatus @default(PENDING)
   prepaidCredit      Int                @default(2)
