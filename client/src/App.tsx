@@ -16,6 +16,7 @@ import ServiceDetailPage from './pages/services/ServiceDetailPage'
 import ContactPage from './pages/ContactPage'
 import HowItWorksPage from './pages/HowItWorksPage'
 import BlogPage from './pages/BlogPage'
+import JobDetailsPage from './pages/job/JobDetailsPage'
 
 function App() {
   const { user } = useAuthStore()
@@ -29,6 +30,7 @@ function App() {
       <Route path="/verify" element={<VerifyPage />} />
       
       <Route path="/post-job" element={<PostJobPage />} />
+      <Route path="/job/:jobId" element={<JobDetailsPage />} />
       <Route path="/search-tradesmen" element={<SearchTradesmenPage />} />
       <Route path="/tradesman/:tradesmanId" element={<TradesmanProfilePage />} />
       
