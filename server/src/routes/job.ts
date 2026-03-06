@@ -8,6 +8,34 @@ import { notifyTradesmenForJob } from '../services/jobMatcher.js';
 
 const router = express.Router();
 
+function normalizeServiceIds(raw: unknown): string[] {
+  if (!raw) {
+    return [];
+  }
+
+  if (Array.isArray(raw)) {
+    return raw.filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+  }
+
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+      }
+      if (typeof parsed === 'string' && parsed.trim().length > 0) {
+        return [parsed];
+      }
+    } catch (error) {
+      if (raw.trim().length > 0) {
+        return [raw];
+      }
+    }
+  }
+
+  return [];
+}
+
 router.post('/', authenticate, authorize('CUSTOMER'), upload.array('images', 5), async (req: AuthRequest, res) => {
   try {
     const {
@@ -31,6 +59,31 @@ router.post('/', authenticate, authorize('CUSTOMER'), upload.array('images', 5),
       return res.status(404).json({ message: 'Customer profile not found' });
     }
 
+    const serviceIdsList = normalizeServiceIds(serviceIds);
+
+    if (serviceIdsList.length === 0) {
+      return res.status(400).json({ message: 'At least one service is required' });
+    }
+
+    const existingServices = await prisma.service.findMany({
+      where: {
+        id: {
+          in: serviceIdsList
+        },
+        isActive: true
+      },
+      select: { id: true }
+    });
+
+    if (existingServices.length !== serviceIdsList.length) {
+      const validIds = new Set(existingServices.map(service => service.id));
+      const invalidServiceIds = serviceIdsList.filter(id => !validIds.has(id));
+      return res.status(400).json({
+        message: 'One or more selected services are invalid',
+        invalidServiceIds
+      });
+    }
+
     const jobId = await generateJobId();
     const images = (req.files as Express.Multer.File[])?.map(file => `/uploads/${file.filename}`) || [];
 
@@ -38,7 +91,7 @@ router.post('/', authenticate, authorize('CUSTOMER'), upload.array('images', 5),
       data: {
         jobId,
         customerId: customer.id,
-        serviceType: Array.isArray(serviceIds) ? serviceIds.join(',') : serviceIds,
+        serviceType: serviceIdsList.join(','),
         description,
         location: `${area}, ${city}`,
         city,
@@ -50,7 +103,7 @@ router.post('/', authenticate, authorize('CUSTOMER'), upload.array('images', 5),
         isDirectRequest: isDirectRequest === 'true' || isDirectRequest === true,
         targetTradesmanId: targetTradesmanId || null,
         services: {
-          create: (Array.isArray(serviceIds) ? serviceIds : [serviceIds]).map((serviceId: string) => ({
+          create: serviceIdsList.map((serviceId: string) => ({
             serviceId
           }))
         }

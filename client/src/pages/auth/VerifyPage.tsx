@@ -18,8 +18,9 @@ export default function VerifyPage() {
     if (token) {
       verifyToken(token)
     } else {
-      setStatus('error')
-      setMessage('No verification token provided')
+      //setStatus('error')
+      //setMessage('No verification token provided')
+      navigate('/login')
     }
   }, [searchParams])
 
