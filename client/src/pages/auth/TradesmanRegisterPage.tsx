@@ -23,6 +23,7 @@ export default function TradesmanRegisterPage() {
     whatsapp: '',
     mobile: '',
     landline: '',
+    website: '',
     cnicNumber: '',
   })
   const [files, setFiles] = useState<any>({})
@@ -165,14 +166,25 @@ export default function TradesmanRegisterPage() {
                     <label className="label">Business Name <span className="text-red-500">*</span></label>
                     <input name="businessName" required className="input" value={formData.businessName} onChange={handleChange} />
                   </div>
+                  <div>
+                    <label className="label">Website</label>
+                    <input
+                      name="website"
+                      type="url"
+                      placeholder="https://yourbusiness.com"
+                      className="input"
+                      value={formData.website}
+                      onChange={handleChange}
+                    />
+                  </div>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label className="label">Building Number</label>
-                      <input name="buildingNumber" className="input" value={formData.buildingNumber} onChange={handleChange} />
+                      <label className="label">Building Number <span className="text-red-500">*</span></label>
+                      <input name="buildingNumber" required className="input" value={formData.buildingNumber} onChange={handleChange} />
                     </div>
                     <div>
-                      <label className="label">Street</label>
-                      <input name="street" className="input" value={formData.street} onChange={handleChange} />
+                      <label className="label">Street <span className="text-red-500">*</span></label>
+                      <input name="street" required className="input" value={formData.street} onChange={handleChange} />
                     </div>
                     <div>
                       <label className="label">Town <span className="text-red-500">*</span></label>
