@@ -90,6 +90,8 @@ router.post('/register', upload.fields([
 
     console.log('✅ User created:', user.id);
 
+    const tradesmanId = await generateTradesmanId();
+
     const businessAddress = [buildingNumber, street, town, city, country || 'Pakistan']
       .filter(Boolean)
       .join(', ');
@@ -98,7 +100,7 @@ router.post('/register', upload.fields([
     const tradesman = await prisma.tradesman.create({
       data: {
         userId: user.id,
-        tradesmanId: 'PENDING',
+        tradesmanId,
         businessName,
         businessAddress,
         buildingNumber: buildingNumber || '',
