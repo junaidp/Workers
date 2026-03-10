@@ -201,8 +201,8 @@ export default function TradesmanRegisterPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="label">Business Description <span className="text-red-500">*</span></label>
-                    <textarea name="description" required className="input" rows={4} value={formData.description} onChange={handleChange} />
+                    <label className="label">Business Description</label>
+                    <textarea name="description" className="input" rows={4} value={formData.description} onChange={handleChange} />
                   </div>
                 </div>
               </div>

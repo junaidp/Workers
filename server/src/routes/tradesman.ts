@@ -46,7 +46,7 @@ router.post('/register', upload.fields([
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     console.log('📁 Files received:', Object.keys(files || {}));
 
-    if (!firstName || !lastName || !businessName || !town || !city || !description || 
+    if (!firstName || !lastName || !businessName || !town || !city || 
         !whatsapp || !mobile || !cnicNumber || !files.profilePicture || 
         !files.cnicImage || !files.proofOfAddress) {
       return res.status(400).json({ message: 'Missing required fields' });
@@ -106,7 +106,7 @@ router.post('/register', upload.fields([
         town,
         city,
         country: country || 'Pakistan',
-        description,
+        description: description || '',
         cnicNumber: cnicNumber.replace(/-/g, ''),
         cnicImage: `/uploads/${files.cnicImage[0].filename}`,
         proofOfAddress: `/uploads/${files.proofOfAddress[0].filename}`,
