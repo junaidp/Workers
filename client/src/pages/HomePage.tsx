@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, CheckCircle, Users, Shield, Star, ArrowRight, Wrench, Zap, Home } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
@@ -6,19 +6,59 @@ import api from '../lib/api'
 
 export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([])
+  const [allServices, setAllServices] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [filteredServices, setFilteredServices] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchCategories()
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = allServices.filter(service =>
+        service.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      setFilteredServices(filtered.slice(0, 10))
+      setShowSuggestions(true)
+    } else {
+      setFilteredServices([])
+      setShowSuggestions(false)
+    }
+  }, [searchQuery, allServices])
+
   const fetchCategories = async () => {
     try {
       const response = await api.get('/services/categories')
       setCategories(response.data.slice(0, 6))
+      const services = response.data.flatMap((cat: any) => 
+        cat.services.map((service: any) => ({
+          ...service,
+          categoryName: cat.name
+        }))
+      )
+      setAllServices(services)
     } catch (error) {
       console.error('Error fetching categories:', error)
     }
+  }
+
+  const handleServiceSelect = (serviceName: string) => {
+    setSearchQuery(serviceName)
+    setShowSuggestions(false)
   }
 
   return (
@@ -35,14 +75,29 @@ export default function HomePage() {
             
             <div className="bg-white rounded-lg shadow-xl p-4 md:p-6">
               <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
+                <div className="flex-1 relative" ref={searchRef}>
                   <input
                     type="text"
                     placeholder="What service do you need? (e.g., electrician, plumber)"
                     className="w-full px-4 py-3 text-gray-900 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
                   />
+                  {showSuggestions && filteredServices.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {filteredServices.map((service) => (
+                        <button
+                          key={service.id}
+                          onClick={() => handleServiceSelect(service.name)}
+                          className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900">{service.name}</div>
+                          <div className="text-sm text-gray-500">{service.categoryName}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <Link
                   to={`/post-job${searchQuery ? `?service=${searchQuery}` : ''}`}
