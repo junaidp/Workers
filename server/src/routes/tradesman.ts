@@ -232,13 +232,18 @@ router.post('/register', upload.fields([
 
 router.get('/list', async (req, res) => {
   try {
-    const { city, search, page = 1, limit = 12 } = req.query;
+    const { city, search, page = 1, limit = 12, showPending } = req.query;
 
     const where: any = {
-      isApproved: true,
-      isVisible: true,
-      verificationStatus: 'VERIFIED'
+      isVisible: true
     };
+
+    if (showPending === 'true') {
+      // Show all workers including pending ones
+    } else {
+      // Show only approved workers (default)
+      where.isApproved = true;
+    }
 
     if (city) {
       where.city = city as string;

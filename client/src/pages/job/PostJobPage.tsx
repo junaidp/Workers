@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Upload, Camera, Wrench } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Upload, Camera } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
 import { pakistanCities } from '../../lib/utils'
 import { useAuthStore } from '../../stores/authStore'
+import { getServiceIcon } from '../../lib/serviceIcons'
 
 const STEPS = ['Service', 'Details', 'Description', 'Photos', 'Location', 'Schedule', 'Contact']
 
@@ -247,9 +248,14 @@ export default function PostJobPage() {
                               {service.image ? (
                                 <img src={service.image} alt={service.name} className="w-8 h-8 object-cover rounded" />
                               ) : (
-                                <div className="w-8 h-8 bg-primary-100 rounded flex items-center justify-center">
-                                  <Wrench className="w-4 h-4 text-primary-600" />
-                                </div>
+                                (() => {
+                                  const IconComponent = getServiceIcon(service.name);
+                                  return (
+                                    <div className="w-8 h-8 bg-primary-100 rounded flex items-center justify-center">
+                                      <IconComponent className="w-4 h-4 text-primary-600" />
+                                    </div>
+                                  );
+                                })()
                               )}
                               <span>{service.name}</span>
                             </div>

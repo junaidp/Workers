@@ -10,12 +10,13 @@ export default function TradePeoplePage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
+  const [showPending, setShowPending] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
   useEffect(() => {
     fetchTradespeople()
-  }, [page, selectedCity])
+  }, [page, selectedCity, showPending])
 
   const fetchTradespeople = async () => {
     setLoading(true)
@@ -23,6 +24,7 @@ export default function TradePeoplePage() {
       const params: any = { page, limit: 12 }
       if (selectedCity) params.city = selectedCity
       if (searchQuery) params.search = searchQuery
+      if (showPending) params.showPending = 'true'
 
       const response = await api.get('/tradesman/list', { params })
       setTradespeople(response.data.tradespeople)
@@ -52,35 +54,51 @@ export default function TradePeoplePage() {
 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  placeholder="Search by name or business..."
-                  className="input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+            <form onSubmit={handleSearch} className="space-y-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    placeholder="Search by name or business..."
+                    className="input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+                <div className="md:w-64">
+                  <select
+                    className="input"
+                    value={selectedCity}
+                    onChange={(e) => {
+                      setSelectedCity(e.target.value)
+                      setPage(1)
+                    }}
+                  >
+                    <option value="">All Cities</option>
+                    {pakistanCities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+                <button type="submit" className="btn btn-primary">
+                  <Search className="w-5 h-5 mr-2" />
+                  Search
+                </button>
               </div>
-              <div className="md:w-64">
-                <select
-                  className="input"
-                  value={selectedCity}
-                  onChange={(e) => {
-                    setSelectedCity(e.target.value)
-                    setPage(1)
-                  }}
-                >
-                  <option value="">All Cities</option>
-                  {pakistanCities.map(city => (
-                    <option key={city} value={city}>{city}</option>
-                  ))}
-                </select>
+              <div className="flex items-center">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showPending}
+                    onChange={(e) => {
+                      setShowPending(e.target.checked)
+                      setPage(1)
+                    }}
+                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-gray-700">Show pending/unapproved workers</span>
+                </label>
               </div>
-              <button type="submit" className="btn btn-primary">
-                <Search className="w-5 h-5 mr-2" />
-                Search
-              </button>
             </form>
           </div>
 
