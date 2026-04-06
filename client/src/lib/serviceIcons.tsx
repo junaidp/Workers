@@ -16,8 +16,7 @@ import {
   Truck,
   Package,
   Settings,
-  Tool,
-  HardHat,
+  Construction,
   Lightbulb,
   Flame,
   Snowflake,
@@ -71,7 +70,7 @@ export const getServiceIcon = (serviceName: string) => {
   
   // Construction/Masonry
   if (name.includes('mason') || name.includes('brick') || name.includes('construct') || name.includes('building')) {
-    return HardHat
+    return Construction
   }
   
   // Home appliances
@@ -110,7 +109,7 @@ export const getServiceIcon = (serviceName: string) => {
   
   // Handyman/General
   if (name.includes('handyman') || name.includes('general') || name.includes('maintenance')) {
-    return Tool
+    return Settings
   }
   
   // Geyser
