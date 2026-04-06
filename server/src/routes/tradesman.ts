@@ -230,6 +230,86 @@ router.post('/register', upload.fields([
   }
 });
 
+router.get('/list', async (req, res) => {
+  try {
+    const { city, search, page = 1, limit = 12 } = req.query;
+
+    const where: any = {
+      isApproved: true,
+      isVisible: true,
+      verificationStatus: 'VERIFIED'
+    };
+
+    if (city) {
+      where.city = city as string;
+    }
+
+    if (search) {
+      where.OR = [
+        { businessName: { contains: search as string, mode: 'insensitive' } },
+        { user: { firstName: { contains: search as string, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search as string, mode: 'insensitive' } } }
+      ];
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const [tradesmen, total] = await Promise.all([
+      prisma.tradesman.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              mobile: true,
+              whatsapp: true
+            }
+          },
+          services: {
+            include: {
+              service: {
+                include: {
+                  category: true
+                }
+              }
+            }
+          },
+          portfolioImages: {
+            take: 3
+          },
+          jobResponses: {
+            where: { status: 'COMPLETED' },
+            select: { id: true }
+          }
+        },
+        skip,
+        take: Number(limit),
+        orderBy: [
+          { rating: 'desc' },
+          { reviewCount: 'desc' }
+        ]
+      }),
+      prisma.tradesman.count({ where })
+    ]);
+
+    const tradespeopleWithStats = tradesmen.map(t => ({
+      ...t,
+      completedJobs: t.jobResponses.length
+    }));
+
+    res.json({
+      tradespeople: tradespeopleWithStats,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / Number(limit))
+    });
+  } catch (error) {
+    console.error('List tradespeople error:', error);
+    res.status(500).json({ message: 'Failed to list tradespeople' });
+  }
+});
+
 router.get('/search', async (req, res) => {
   try {
     const { city, serviceId, page = 1, limit = 12 } = req.query;

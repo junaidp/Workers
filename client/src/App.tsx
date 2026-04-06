@@ -8,6 +8,7 @@ import VerifyPage from './pages/auth/VerifyPage'
 import PostJobPage from './pages/job/PostJobPage'
 import SearchTradesmenPage from './pages/tradesman/SearchTradesmenPage'
 import TradesmanProfilePage from './pages/tradesman/TradesmanProfilePage'
+import TradePeoplePage from './pages/TradePeoplePage'
 import CustomerDashboard from './pages/customer/CustomerDashboard'
 import TradesmanDashboard from './pages/tradesman/TradesmanDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -31,6 +32,7 @@ function App() {
       
       <Route path="/post-job" element={<PostJobPage />} />
       <Route path="/job/:jobId" element={<JobDetailsPage />} />
+      <Route path="/tradespeople" element={<TradePeoplePage />} />
       <Route path="/search-tradesmen" element={<SearchTradesmenPage />} />
       <Route path="/tradesman/:tradesmanId" element={<TradesmanProfilePage />} />
       

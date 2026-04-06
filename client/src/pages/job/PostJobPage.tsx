@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Upload, Camera } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Upload, Camera, Wrench } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
@@ -12,8 +12,13 @@ const STEPS = ['Service', 'Details', 'Description', 'Photos', 'Location', 'Sched
 export default function PostJobPage() {
   const [currentStep, setCurrentStep] = useState(0)
   const [categories, setCategories] = useState<any[]>([])
+  const [allServices, setAllServices] = useState<any[]>([])
   const [selectedCategory, setSelectedCategory] = useState<any>(null)
   const [selectedServices, setSelectedServices] = useState<string[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filteredServices, setFilteredServices] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState({
     description: '',
     city: '',
@@ -35,13 +40,51 @@ export default function PostJobPage() {
     fetchCategories()
   }, [])
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = allServices.filter(service =>
+        service.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      setFilteredServices(filtered.slice(0, 10))
+      setShowSuggestions(true)
+    } else {
+      setFilteredServices([])
+      setShowSuggestions(false)
+    }
+  }, [searchQuery, allServices])
+
   const fetchCategories = async () => {
     try {
       const response = await api.get('/services/categories')
       setCategories(response.data)
+      const services = response.data.flatMap((cat: any) => 
+        cat.services.map((service: any) => ({
+          ...service,
+          categoryName: cat.name
+        }))
+      )
+      setAllServices(services)
     } catch (error) {
       console.error('Error fetching categories:', error)
     }
+  }
+
+  const handleServiceSelect = (serviceId: string) => {
+    if (!selectedServices.includes(serviceId)) {
+      setSelectedServices(prev => [...prev, serviceId])
+    }
+    setSearchQuery('')
+    setShowSuggestions(false)
   }
 
   const handleServiceToggle = (serviceId: string) => {
@@ -161,20 +204,55 @@ export default function PostJobPage() {
             {currentStep === 0 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4">What service do you need?</h2>
+                
+                <div className="mb-6 relative" ref={searchRef}>
+                  <input
+                    type="text"
+                    placeholder="Search for a service (e.g., plumber, electrician)..."
+                    className="input"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
+                  />
+                  {showSuggestions && filteredServices.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {filteredServices.map((service) => (
+                        <button
+                          key={service.id}
+                          onClick={() => handleServiceSelect(service.id)}
+                          className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-b-0"
+                        >
+                          <div className="font-medium text-gray-900">{service.name}</div>
+                          <div className="text-sm text-gray-500">{service.categoryName}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="space-y-6">
                   {categories.map(category => (
                     <div key={category.id}>
                       <h3 className="font-semibold text-primary-600 mb-3">{category.name}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {category.services.map((service: any) => (
-                          <label key={service.id} className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                          <label key={service.id} className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                             <input
                               type="checkbox"
                               checked={selectedServices.includes(service.id)}
                               onChange={() => handleServiceToggle(service.id)}
                               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                             />
-                            <span>{service.name}</span>
+                            <div className="flex items-center space-x-2 flex-1">
+                              {service.image ? (
+                                <img src={service.image} alt={service.name} className="w-8 h-8 object-cover rounded" />
+                              ) : (
+                                <div className="w-8 h-8 bg-primary-100 rounded flex items-center justify-center">
+                                  <Wrench className="w-4 h-4 text-primary-600" />
+                                </div>
+                              )}
+                              <span>{service.name}</span>
+                            </div>
                           </label>
                         ))}
                       </div>
