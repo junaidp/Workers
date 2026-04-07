@@ -1,6 +1,7 @@
 import express from 'express';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
+import { upload } from '../middleware/upload.js';
 import { generateTradesmanId } from '../utils/idGenerator.js';
 import { sendEmail, sendWhatsApp } from '../utils/notifications.js';
 
@@ -35,6 +36,33 @@ router.get('/dashboard/stats', authenticate, authorize('ADMIN'), async (req: Aut
   } catch (error) {
     console.error('Get admin stats error:', error);
     res.status(500).json({ message: 'Failed to get stats' });
+  }
+});
+
+router.get('/tradesmen/all', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
+  try {
+    const tradesmen = await prisma.tradesman.findMany({
+      include: {
+        user: true,
+        services: {
+          include: {
+            service: {
+              include: {
+                category: true
+              }
+            }
+          }
+        },
+        portfolioImages: true,
+        certifications: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(tradesmen);
+  } catch (error) {
+    console.error('Get all tradesmen error:', error);
+    res.status(500).json({ message: 'Failed to get tradesmen' });
   }
 });
 
@@ -360,6 +388,30 @@ router.put('/contact-message/:id/resolve', authenticate, authorize('ADMIN'), asy
   } catch (error) {
     console.error('Resolve contact message error:', error);
     res.status(500).json({ message: 'Failed to resolve message' });
+  }
+});
+
+router.put('/service/:id/image', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const service = await prisma.service.update({
+      where: { id: idString },
+      data: {
+        image: `/uploads/${file.filename}`
+      }
+    });
+
+    res.json({ message: 'Service image updated successfully', service });
+  } catch (error) {
+    console.error('Update service image error:', error);
+    res.status(500).json({ message: 'Failed to update service image' });
   }
 });
 

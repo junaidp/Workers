@@ -14,6 +14,7 @@ export default function TradesmanRegisterPage() {
     firstName: '',
     lastName: '',
     email: '',
+    password: '',
     businessName: '',
     buildingNumber: '',
     street: '',
@@ -77,7 +78,7 @@ export default function TradesmanRegisterPage() {
       return
     }
 
-    if (!files.profilePicture || !files.cnicImage || !files.proofOfAddress) {
+    if (!files.profilePicture || !files.cnicImage) {
       toast.error('Please upload all required documents')
       return
     }
@@ -151,6 +152,10 @@ export default function TradesmanRegisterPage() {
                   <div>
                     <label className="label">Email</label>
                     <input name="email" type="email" className="input" value={formData.email} onChange={handleChange} />
+                  </div>
+                  <div>
+                    <label className="label">Password <span className="text-red-500">*</span></label>
+                    <input name="password" type="password" required className="input" placeholder="Enter password" value={formData.password} onChange={handleChange} />
                   </div>
                   <div>
                     <label className="label">CNIC Number <span className="text-red-500">*</span></label>
@@ -243,8 +248,8 @@ export default function TradesmanRegisterPage() {
                     <input type="file" accept="image/*" required onChange={(e) => handleFileChange(e, 'cnicImage')} className="input" />
                   </div>
                   <div>
-                    <label className="label">Proof of Address (Utility Bill) <span className="text-red-500">*</span></label>
-                    <input type="file" accept="image/*,application/pdf" required onChange={(e) => handleFileChange(e, 'proofOfAddress')} className="input" />
+                    <label className="label">Proof of Address (Utility Bill) <span className="text-gray-500">(Optional)</span></label>
+                    <input type="file" accept="image/*,application/pdf" onChange={(e) => handleFileChange(e, 'proofOfAddress')} className="input" />
                   </div>
                   <div>
                     <label className="label">Trade License</label>

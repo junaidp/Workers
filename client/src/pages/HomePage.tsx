@@ -43,7 +43,7 @@ export default function HomePage() {
   const fetchCategories = async () => {
     try {
       const response = await api.get('/services/categories')
-      setCategories(response.data.slice(0, 6))
+      setCategories(response.data)
       const services = response.data.flatMap((cat: any) => 
         cat.services.map((service: any) => ({
           ...service,
@@ -179,7 +179,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Popular Services
+              All Services
             </h2>
             <p className="text-xl text-gray-600">Find the right professional for your needs</p>
           </div>
@@ -200,7 +200,7 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mt-10">
-            <Link to="/services/home-services" className="btn btn-outline btn-lg">
+            <Link to="/services" className="btn btn-outline btn-lg">
               View All Services
             </Link>
           </div>

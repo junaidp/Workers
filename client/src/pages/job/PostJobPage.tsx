@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Upload, Camera } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
@@ -8,9 +8,10 @@ import { pakistanCities } from '../../lib/utils'
 import { useAuthStore } from '../../stores/authStore'
 import { getServiceIcon } from '../../lib/serviceIcons'
 
-const STEPS = ['Service', 'Details', 'Description', 'Photos', 'Location', 'Schedule', 'Contact']
+const STEPS = ['Service', 'Description', 'Photos', 'Location', 'Schedule', 'Contact']
 
 export default function PostJobPage() {
+  const [searchParams] = useSearchParams()
   const [currentStep, setCurrentStep] = useState(0)
   const [categories, setCategories] = useState<any[]>([])
   const [allServices, setAllServices] = useState<any[]>([])
@@ -20,6 +21,7 @@ export default function PostJobPage() {
   const [filteredServices, setFilteredServices] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
+  const [hasPreSelectedService, setHasPreSelectedService] = useState(false)
   const [formData, setFormData] = useState({
     description: '',
     city: '',
@@ -40,6 +42,20 @@ export default function PostJobPage() {
   useEffect(() => {
     fetchCategories()
   }, [])
+
+  useEffect(() => {
+    const serviceParam = searchParams.get('service')
+    if (serviceParam && allServices.length > 0 && !hasPreSelectedService) {
+      const matchedService = allServices.find(s => 
+        s.name.toLowerCase().includes(serviceParam.toLowerCase())
+      )
+      if (matchedService) {
+        setSelectedServices([matchedService.id])
+        setCurrentStep(1)
+        setHasPreSelectedService(true)
+      }
+    }
+  }, [searchParams, allServices, hasPreSelectedService])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,11 +105,10 @@ export default function PostJobPage() {
   }
 
   const handleServiceToggle = (serviceId: string) => {
-    setSelectedServices(prev =>
-      prev.includes(serviceId)
-        ? prev.filter(id => id !== serviceId)
-        : [...prev, serviceId]
-    )
+    setSelectedServices([serviceId])
+    setTimeout(() => {
+      setCurrentStep(1)
+    }, 300)
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,7 +168,7 @@ export default function PostJobPage() {
       toast.error('Please select at least one service')
       return
     }
-    if (currentStep === 4 && (!formData.city || !formData.area)) {
+    if (currentStep === 3 && (!formData.city || !formData.area)) {
       toast.error('Please enter city and area')
       return
     }
@@ -232,53 +247,55 @@ export default function PostJobPage() {
                 </div>
 
                 <div className="space-y-6">
-                  {categories.map(category => (
-                    <div key={category.id}>
-                      <h3 className="font-semibold text-primary-600 mb-3">{category.name}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {category.services.map((service: any) => (
-                          <label key={service.id} className="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                            <input
-                              type="checkbox"
-                              checked={selectedServices.includes(service.id)}
-                              onChange={() => handleServiceToggle(service.id)}
-                              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                            />
-                            <div className="flex items-center space-x-2 flex-1">
-                              {service.image ? (
-                                <img src={service.image} alt={service.name} className="w-8 h-8 object-cover rounded" />
-                              ) : (
-                                (() => {
-                                  const IconComponent = getServiceIcon(service.name);
-                                  return (
-                                    <div className="w-8 h-8 bg-primary-100 rounded flex items-center justify-center">
-                                      <IconComponent className="w-4 h-4 text-primary-600" />
-                                    </div>
-                                  );
-                                })()
-                              )}
-                              <span>{service.name}</span>
-                            </div>
-                          </label>
-                        ))}
+                  {categories.map(category => {
+                    const visibleServices = selectedServices.length > 0 
+                      ? category.services.filter((service: any) => selectedServices.includes(service.id))
+                      : category.services;
+                    
+                    if (visibleServices.length === 0) return null;
+                    
+                    return (
+                      <div key={category.id}>
+                        <h3 className="font-semibold text-primary-600 mb-3">{category.name}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {visibleServices.map((service: any) => (
+                            <label key={service.id} className={`flex items-center space-x-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                              selectedServices.includes(service.id) 
+                                ? 'border-primary-600 bg-primary-50' 
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}>
+                              <input
+                                type="radio"
+                                checked={selectedServices.includes(service.id)}
+                                onChange={() => handleServiceToggle(service.id)}
+                                className="text-primary-600 focus:ring-primary-500"
+                              />
+                              <div className="flex items-center space-x-2 flex-1">
+                                {service.image ? (
+                                  <img src={service.image} alt={service.name} className="w-8 h-8 object-cover rounded" />
+                                ) : (
+                                  (() => {
+                                    const IconComponent = getServiceIcon(service.name);
+                                    return (
+                                      <div className="w-8 h-8 bg-primary-100 rounded flex items-center justify-center">
+                                        <IconComponent className="w-4 h-4 text-primary-600" />
+                                      </div>
+                                    );
+                                  })()
+                                )}
+                                <span className="font-medium">{service.name}</span>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {currentStep === 1 && (
-              <div>
-                <h2 className="text-xl font-semibold mb-4">More details about the service</h2>
-                <p className="text-gray-600 mb-4">Select specific services you need (Optional)</p>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-500">You can add more details in the next step</p>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 2 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4">Describe your job</h2>
                 <p className="text-gray-600 mb-4">Provide details to help tradespeople understand your requirements (Optional)</p>
@@ -292,7 +309,7 @@ export default function PostJobPage() {
               </div>
             )}
 
-            {currentStep === 3 && (
+            {currentStep === 2 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4">Add photos (Optional)</h2>
                 <p className="text-gray-600 mb-4">Photos help tradespeople understand the job better</p>
@@ -335,7 +352,7 @@ export default function PostJobPage() {
               </div>
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 3 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4">Where is the work needed?</h2>
                 <p className="text-gray-600 mb-4">Your full address won't be shared until you choose a tradesperson</p>
@@ -371,7 +388,7 @@ export default function PostJobPage() {
               </div>
             )}
 
-            {currentStep === 5 && (
+            {currentStep === 4 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4">When do you need this done?</h2>
                 
@@ -420,7 +437,7 @@ export default function PostJobPage() {
               </div>
             )}
 
-            {currentStep === 6 && (
+            {currentStep === 5 && (
               <div>
                 <h2 className="text-xl font-semibold mb-4">Review and Submit</h2>
                 <div className="space-y-4">

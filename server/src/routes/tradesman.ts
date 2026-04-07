@@ -1,4 +1,5 @@
 import express from 'express';
+import * as bcrypt from 'bcryptjs';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
@@ -24,6 +25,7 @@ router.post('/register', upload.fields([
       firstName,
       lastName,
       email,
+      password,
       businessName,
       buildingNumber,
       street,
@@ -46,9 +48,9 @@ router.post('/register', upload.fields([
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     console.log('📁 Files received:', Object.keys(files || {}));
 
-    if (!firstName || !lastName || !businessName || !town || !city || 
+    if (!firstName || !lastName || !password || !businessName || !town || !city || 
         !whatsapp || !mobile || !cnicNumber || !files.profilePicture || 
-        !files.cnicImage || !files.proofOfAddress) {
+        !files.cnicImage) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -76,11 +78,13 @@ router.post('/register', upload.fields([
     }
 
     console.log('👤 Creating user...');
+    const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
         firstName,
         lastName,
         email: email || null,
+        password: hashedPassword,
         mobile,
         whatsapp: whatsapp || mobile,
         role: 'TRADESMAN',
@@ -111,7 +115,7 @@ router.post('/register', upload.fields([
         description: description || '',
         cnicNumber: cnicNumber.replace(/-/g, ''),
         cnicImage: `/uploads/${files.cnicImage[0].filename}`,
-        proofOfAddress: `/uploads/${files.proofOfAddress[0].filename}`,
+        proofOfAddress: files.proofOfAddress ? `/uploads/${files.proofOfAddress[0].filename}` : null,
         profilePicture: `/uploads/${files.profilePicture[0].filename}`,
         tradeLicense: files.tradeLicense ? `/uploads/${files.tradeLicense[0].filename}` : null,
         landline: landline || null,

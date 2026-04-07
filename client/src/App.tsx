@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuthStore } from './stores/authStore'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/auth/LoginPage'
@@ -14,6 +15,7 @@ import TradesmanDashboard from './pages/tradesman/TradesmanDashboard'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ServiceCategoryPage from './pages/services/ServiceCategoryPage'
 import ServiceDetailPage from './pages/services/ServiceDetailPage'
+import AllServicesPage from './pages/AllServicesPage'
 import ContactPage from './pages/ContactPage'
 import HowItWorksPage from './pages/HowItWorksPage'
 import BlogPage from './pages/BlogPage'
@@ -21,6 +23,11 @@ import JobDetailsPage from './pages/job/JobDetailsPage'
 
 function App() {
   const { user } = useAuthStore()
+  const location = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
 
   return (
     <Routes>
@@ -36,6 +43,7 @@ function App() {
       <Route path="/search-tradesmen" element={<SearchTradesmenPage />} />
       <Route path="/tradesman/:tradesmanId" element={<TradesmanProfilePage />} />
       
+      <Route path="/services" element={<AllServicesPage />} />
       <Route path="/services/:categorySlug" element={<ServiceCategoryPage />} />
       <Route path="/service/:serviceSlug" element={<ServiceDetailPage />} />
       
