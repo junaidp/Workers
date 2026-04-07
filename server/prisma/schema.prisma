@@ -89,7 +89,7 @@ model Tradesman {
   description        String             @db.Text
   cnicNumber         String
   cnicImage          String
-  proofOfAddress     String
+  proofOfAddress     String?
   profilePicture     String
   tradeLicense       String?
   landline           String?
