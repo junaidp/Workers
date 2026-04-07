@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage'
 import LoginPage from './pages/auth/LoginPage'
 import CustomerRegisterPage from './pages/auth/CustomerRegisterPage'
 import TradesmanRegisterPage from './pages/auth/TradesmanRegisterPage'
+import AdminRegisterPage from './pages/auth/AdminRegisterPage'
 import VerifyPage from './pages/auth/VerifyPage'
 import PostJobPage from './pages/job/PostJobPage'
 import SearchTradesmenPage from './pages/tradesman/SearchTradesmenPage'
@@ -35,6 +36,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register/customer" element={<CustomerRegisterPage />} />
       <Route path="/register/tradesman" element={<TradesmanRegisterPage />} />
+      <Route path="/register/admin" element={<AdminRegisterPage />} />
       <Route path="/verify" element={<VerifyPage />} />
       
       <Route path="/post-job" element={<PostJobPage />} />

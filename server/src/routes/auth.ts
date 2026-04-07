@@ -8,6 +8,73 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
+router.post('/register/admin', async (req, res) => {
+  try {
+    const { email, password, fullName } = req.body;
+
+    if (!email || !password || !fullName) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+    }
+
+    const existingUser = await prisma.user.findFirst({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        mobile: email,
+        whatsapp: email,
+        role: 'ADMIN',
+        countryCode: '+92',
+        isEmailVerified: true,
+        isWhatsappVerified: true,
+        admin: {
+          create: {}
+        }
+      },
+      include: {
+        admin: true
+      }
+    });
+
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
+    );
+
+    res.status(201).json({
+      message: 'Admin registration successful',
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        email: user.email,
+        admin: user.admin
+      }
+    });
+  } catch (error) {
+    console.error('Admin registration error:', error);
+    res.status(500).json({ message: 'Registration failed' });
+  }
+});
+
 router.post('/register/customer', async (req, res) => {
   try {
     const { fullName, email, mobile, whatsapp, city, area } = req.body;
@@ -152,7 +219,7 @@ router.post('/verify', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { mobile, email } = req.body;
+    const { mobile, email, password } = req.body;
 
     if (!mobile && !email) {
       return res.status(400).json({ message: 'Mobile or email required' });
@@ -177,8 +244,25 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    if (!user.isEmailVerified && !user.isWhatsappVerified) {
-      return res.status(401).json({ message: 'Please verify your account first' });
+    // For ADMIN and TRADESMAN roles, require password authentication
+    if (user.role === 'ADMIN' || user.role === 'TRADESMAN') {
+      if (!password) {
+        return res.status(400).json({ message: 'Password required' });
+      }
+
+      if (!user.password) {
+        return res.status(401).json({ message: 'Password not set for this account' });
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ message: 'Invalid password' });
+      }
+    } else {
+      // For CUSTOMER role, check verification status
+      if (!user.isEmailVerified && !user.isWhatsappVerified) {
+        return res.status(401).json({ message: 'Please verify your account first' });
+      }
     }
 
     const token = jwt.sign(

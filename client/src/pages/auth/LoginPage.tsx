@@ -7,7 +7,10 @@ import api from '../../lib/api'
 import { useAuthStore } from '../../stores/authStore'
 
 export default function LoginPage() {
+  const [loginType, setLoginType] = useState<'mobile' | 'email'>('mobile')
   const [mobile, setMobile] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
@@ -17,7 +20,11 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await api.post('/auth/login', { mobile })
+      const loginData = loginType === 'mobile' 
+        ? { mobile } 
+        : { email, password }
+      
+      const response = await api.post('/auth/login', loginData)
       setAuth(response.data.token, response.data.user)
       
       toast.success('Login successful!')
@@ -53,30 +60,91 @@ export default function LoginPage() {
             </p>
           </div>
 
+          <div className="flex gap-2 mb-6">
+            <button
+              type="button"
+              onClick={() => setLoginType('mobile')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                loginType === 'mobile'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Mobile Login
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginType('email')}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                loginType === 'email'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Email Login
+            </button>
+          </div>
+
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="mobile" className="label">
-                Mobile Number
-              </label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
-                  +92
-                </span>
-                <input
-                  id="mobile"
-                  type="tel"
-                  required
-                  className="input rounded-l-none"
-                  placeholder="3001234567"
-                  value={mobile}
-                  onChange={(e) => setMobile(e.target.value)}
-                  maxLength={10}
-                />
+            {loginType === 'mobile' ? (
+              <div>
+                <label htmlFor="mobile" className="label">
+                  Mobile Number
+                </label>
+                <div className="flex">
+                  <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                    +92
+                  </span>
+                  <input
+                    id="mobile"
+                    type="tel"
+                    required
+                    className="input rounded-l-none"
+                    placeholder="3001234567"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    maxLength={10}
+                  />
+                </div>
+                <p className="mt-1 text-sm text-gray-500">
+                  Enter your 10-digit mobile number (without country code)
+                </p>
               </div>
-              <p className="mt-1 text-sm text-gray-500">
-                Enter your 10-digit mobile number (without country code)
-              </p>
-            </div>
+            ) : (
+              <>
+                <div>
+                  <label htmlFor="email" className="label">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    className="input"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="label">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    className="input"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    For Admin and Tradesman accounts
+                  </p>
+                </div>
+              </>
+            )}
 
             <button
               type="submit"
