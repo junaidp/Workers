@@ -1,5 +1,5 @@
 import express from 'express';
-import * as bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../index.js';
 import { validateEmail, validatePakistanMobile } from '../utils/validation.js';
@@ -71,9 +71,17 @@ router.post('/register/admin', async (req, res) => {
         admin: user.admin
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Admin registration error:', error);
-    res.status(500).json({ message: 'Registration failed' });
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    });
+    res.status(500).json({ 
+      message: 'Registration failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
