@@ -166,6 +166,11 @@ export default function LoginPage() {
                   Sign up as Tradesman
                 </Link>
               </div>
+              <div className="pt-2">
+                <Link to="/register/admin" className="text-sm text-gray-500 hover:text-primary-600">
+                  Register as Admin
+                </Link>
+              </div>
             </div>
           </form>
         </div>
