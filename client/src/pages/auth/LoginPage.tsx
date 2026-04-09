@@ -167,7 +167,7 @@ export default function LoginPage() {
                 </Link>
               </div>
               <div className="pt-2">
-                <Link to="/register/admin" className="text-sm text-gray-500 hover:text-primary-600">
+                <Link hidden={true} to="/register/admin" className="text-sm text-gray-500 hover:text-primary-600">
                   Register as Admin
                 </Link>
               </div>
