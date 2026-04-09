@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { CheckCircle, ArrowRight, Star } from 'lucide-react'
+import { CheckCircle, ArrowRight, Star, Edit2 } from 'lucide-react'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
+import { useAuthStore } from '../../stores/authStore'
+import ServiceImageUpload from '../../components/ServiceImageUpload'
 
 export default function ServiceDetailPage() {
   const { serviceSlug } = useParams()
   const [service, setService] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [editingService, setEditingService] = useState<any>(null)
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'ADMIN'
 
   useEffect(() => {
     if (serviceSlug) {
@@ -144,17 +149,43 @@ export default function ServiceDetailPage() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">Specific Services Available</h2>
                   <div className="grid md:grid-cols-2 gap-3">
                     {service.children.map((child: any) => (
-                      <Link
-                        key={child.id}
-                        to={`/service/${child.slug}`}
-                        className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-primary-600 hover:bg-primary-50 transition-colors"
-                      >
-                        <ArrowRight className="w-4 h-4 text-primary-600" />
-                        <span className="font-medium text-gray-900">{child.name}</span>
-                      </Link>
+                      <div key={child.id} className="relative">
+                        <Link
+                          to={`/service/${child.slug}`}
+                          className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-primary-600 hover:bg-primary-50 transition-colors block"
+                        >
+                          <ArrowRight className="w-4 h-4 text-primary-600" />
+                          <span className="font-medium text-gray-900">{child.name}</span>
+                        </Link>
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault()
+                              setEditingService(child)
+                            }}
+                            className="absolute top-1 right-1 p-1.5 bg-white rounded-full shadow-md hover:bg-primary-50 hover:text-primary-600 transition-colors z-10"
+                            title="Edit service image"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
+              )}
+
+              {editingService && (
+                <ServiceImageUpload
+                  serviceId={editingService.id}
+                  serviceName={editingService.name}
+                  currentImage={editingService.image}
+                  onSuccess={() => {
+                    fetchService()
+                    setEditingService(null)
+                  }}
+                  onClose={() => setEditingService(null)}
+                />
               )}
             </div>
 
