@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { Upload, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import api from '../lib/api'
+import { getImageUrl } from '../lib/imageUtils'
 
 interface ServiceImageUploadProps {
   serviceId: string
@@ -121,7 +122,7 @@ export default function ServiceImageUpload({
           <div className="mb-4">
             <p className="text-sm font-medium text-gray-700 mb-2">Current Image:</p>
             <img
-              src={currentImage}
+              src={getImageUrl(currentImage)}
               alt="Current"
               className="w-full h-48 object-cover rounded-lg"
             />

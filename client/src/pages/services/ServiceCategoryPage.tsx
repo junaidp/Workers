@@ -5,6 +5,7 @@ import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
 import { useAuthStore } from '../../stores/authStore'
 import ServiceImageUpload from '../../components/ServiceImageUpload'
+import { getImageUrl } from '../../lib/imageUtils'
 
 export default function ServiceCategoryPage() {
   const { categorySlug } = useParams()
@@ -82,12 +83,12 @@ export default function ServiceCategoryPage() {
                   className="card hover:shadow-lg transition-shadow group block"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-lg flex items-center justify-center group-hover:bg-primary-600 group-hover:text-white transition-colors">
+                    <div className="w-12 h-12 bg-primary-100 text-primary-600 rounded-lg flex items-center justify-center group-hover:bg-primary-600 group-hover:text-white transition-colors overflow-hidden">
                       {service.image ? (
                         <img 
-                          src={service.image} 
+                          src={getImageUrl(service.image)} 
                           alt={service.name}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <Wrench className="w-6 h-6" />
