@@ -13,12 +13,21 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
   // In production, use the full API URL
   const apiUrl = import.meta.env.VITE_API_URL
   
+  console.log('Image URL Debug:', {
+    originalPath: imagePath,
+    apiUrl,
+    hasApiUrl: !!apiUrl
+  })
+  
   if (apiUrl) {
     // Production: use full URL without /api suffix
     const baseUrl = apiUrl.replace(/\/api$/, '')
-    return `${baseUrl}${path}`
+    const fullUrl = `${baseUrl}${path}`
+    console.log('Generated image URL:', fullUrl)
+    return fullUrl
   }
   
   // Development: use relative path (will be proxied)
+  console.log('Using relative path:', path)
   return path
 }
