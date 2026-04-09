@@ -34,11 +34,13 @@ router.post('/register/admin', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const uniqueMobile = `ADMIN${Date.now()}`;
+
     const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
-        mobile: email,
+        mobile: uniqueMobile,
         whatsapp: email,
         role: 'ADMIN',
         countryCode: '+92',
