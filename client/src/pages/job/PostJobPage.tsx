@@ -97,9 +97,7 @@ export default function PostJobPage() {
   }
 
   const handleServiceSelect = (serviceId: string) => {
-    if (!selectedServices.includes(serviceId)) {
-      setSelectedServices(prev => [...prev, serviceId])
-    }
+    setSelectedServices([serviceId])
     setSearchQuery('')
     setShowSuggestions(false)
   }

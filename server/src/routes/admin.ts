@@ -401,10 +401,13 @@ router.put('/service/:id/image', authenticate, authorize('ADMIN'), upload.single
       return res.status(400).json({ message: 'No image file provided' });
     }
 
+    const folder = req.body.folder || 'general';
+    const imagePath = `/uploads/${folder}/${file.filename}`;
+
     const service = await prisma.service.update({
       where: { id: idString },
       data: {
-        image: `/uploads/${file.filename}`
+        image: imagePath
       }
     });
 
