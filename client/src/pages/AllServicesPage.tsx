@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Wrench, ArrowRight } from 'lucide-react'
+import { Wrench, ArrowRight, Edit2 } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import api from '../lib/api'
 import { getImageUrl } from '../lib/imageUtils'
+import { useAuthStore } from '../stores/authStore'
+import ServiceImageUpload from '../components/ServiceImageUpload'
 
 export default function AllServicesPage() {
   const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'ADMIN'
 
   useEffect(() => {
     fetchCategories()
@@ -51,12 +56,12 @@ export default function AllServicesPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {categories.map((category) => (
-              <Link
-                key={category.id}
-                to={`/services/${category.slug}`}
-                className="card hover:shadow-xl transition-all group"
-              >
-                <div className="flex flex-col items-center text-center">
+              <div key={category.id} className="relative">
+                <Link
+                  to={`/services/${category.slug}`}
+                  className="card hover:shadow-xl transition-all group block"
+                >
+                  <div className="flex flex-col items-center text-center">
                   <div className="w-24 h-24 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-primary-600 group-hover:text-white transition-colors overflow-hidden">
                     {category.image ? (
                       <img 
@@ -76,14 +81,41 @@ export default function AllServicesPage() {
                       {category.description}
                     </p>
                   )}
-                  <div className="flex items-center text-primary-600 font-medium text-sm">
-                    <span>{category.services?.length || 0} services available</span>
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <div className="flex items-center text-primary-600 font-medium text-sm">
+                      <span>{category.services?.length || 0} services available</span>
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+                {isAdmin && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setEditingCategory(category)
+                    }}
+                    className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md hover:bg-primary-50 hover:text-primary-600 transition-colors z-10"
+                    title="Edit category image"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
+
+          {editingCategory && (
+            <ServiceImageUpload
+              serviceId={editingCategory.id}
+              serviceName={editingCategory.name}
+              currentImage={editingCategory.image}
+              type="category"
+              onSuccess={() => {
+                fetchCategories()
+                setEditingCategory(null)
+              }}
+              onClose={() => setEditingCategory(null)}
+            />
+          )}
 
           <div className="mt-16 bg-primary-50 border border-primary-200 rounded-lg p-8 text-center">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">

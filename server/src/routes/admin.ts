@@ -418,4 +418,31 @@ router.put('/service/:id/image', authenticate, authorize('ADMIN'), upload.single
   }
 });
 
+router.put('/category/:id/image', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const folder = req.body.folder || 'general';
+    const imagePath = `/uploads/${folder}/${file.filename}`;
+
+    const category = await prisma.category.update({
+      where: { id: idString },
+      data: {
+        image: imagePath
+      }
+    });
+
+    res.json({ message: 'Category image updated successfully', category });
+  } catch (error) {
+    console.error('Update category image error:', error);
+    res.status(500).json({ message: 'Failed to update category image' });
+  }
+});
+
 export default router;

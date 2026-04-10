@@ -10,6 +10,7 @@ interface ServiceImageUploadProps {
   currentImage?: string
   onSuccess: () => void
   onClose: () => void
+  type?: 'service' | 'category'
 }
 
 export default function ServiceImageUpload({ 
@@ -17,7 +18,8 @@ export default function ServiceImageUpload({
   serviceName, 
   currentImage,
   onSuccess, 
-  onClose 
+  onClose,
+  type = 'service'
 }: ServiceImageUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
@@ -51,13 +53,17 @@ export default function ServiceImageUpload({
       const formData = new FormData()
       formData.append('image', file)
 
-      await api.put(`/admin/service/${serviceId}/image`, formData, {
+      const endpoint = type === 'category' 
+        ? `/admin/category/${serviceId}/image`
+        : `/admin/service/${serviceId}/image`
+
+      await api.put(endpoint, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       })
 
-      toast.success('Service image updated successfully')
+      toast.success(`${type === 'category' ? 'Category' : 'Service'} image updated successfully`)
       onSuccess()
       onClose()
     } catch (error: any) {
@@ -72,7 +78,7 @@ export default function ServiceImageUpload({
       <div className="bg-white rounded-lg max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900">
-            Update Service Image
+            Update {type === 'category' ? 'Category' : 'Service'} Image
           </h3>
           <button
             onClick={onClose}
@@ -83,7 +89,7 @@ export default function ServiceImageUpload({
         </div>
 
         <div className="mb-4">
-          <p className="text-sm text-gray-600 mb-2">Service: <span className="font-medium">{serviceName}</span></p>
+          <p className="text-sm text-gray-600 mb-2">{type === 'category' ? 'Category' : 'Service'}: <span className="font-medium">{serviceName}</span></p>
         </div>
 
         <div className="mb-4">
