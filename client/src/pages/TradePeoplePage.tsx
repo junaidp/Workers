@@ -4,6 +4,7 @@ import { Search, MapPin, Star, Briefcase, Phone, MessageCircle } from 'lucide-re
 import Layout from '../components/Layout/Layout'
 import api from '../lib/api'
 import { pakistanCities } from '../lib/utils'
+import { useAuthStore } from '../stores/authStore'
 
 export default function TradePeoplePage() {
   const [tradespeople, setTradespeople] = useState<any[]>([])
@@ -13,6 +14,8 @@ export default function TradePeoplePage() {
   const [showPending, setShowPending] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const { user } = useAuthStore()
+  const isAdmin = user?.role === 'ADMIN'
 
   useEffect(() => {
     fetchTradespeople()
@@ -85,20 +88,22 @@ export default function TradePeoplePage() {
                   Search
                 </button>
               </div>
-              <div className="flex items-center">
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showPending}
-                    onChange={(e) => {
-                      setShowPending(e.target.checked)
-                      setPage(1)
-                    }}
-                    className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-700">Show pending/unapproved workers</span>
-                </label>
-              </div>
+              {isAdmin && (
+                <div className="flex items-center">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showPending}
+                      onChange={(e) => {
+                        setShowPending(e.target.checked)
+                        setPage(1)
+                      }}
+                      className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-700">Show pending/unapproved workers</span>
+                  </label>
+                </div>
+              )}
             </form>
           </div>
 

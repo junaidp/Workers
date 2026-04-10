@@ -5,6 +5,7 @@ import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
 import { useAuthStore } from '../../stores/authStore'
 import ServiceImageUpload from '../../components/ServiceImageUpload'
+import { getImageUrl } from '../../lib/imageUtils'
 
 export default function ServiceDetailPage() {
   const { serviceSlug } = useParams()
@@ -152,9 +153,17 @@ export default function ServiceDetailPage() {
                       <div key={child.id} className="relative">
                         <Link
                           to={`/service/${child.slug}`}
-                          className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-primary-600 hover:bg-primary-50 transition-colors block"
+                          className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:border-primary-600 hover:bg-primary-50 transition-colors block"
                         >
-                          <ArrowRight className="w-4 h-4 text-primary-600" />
+                          {child.image ? (
+                            <img 
+                              src={getImageUrl(child.image)} 
+                              alt={child.name}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          ) : (
+                            <ArrowRight className="w-4 h-4 text-primary-600 flex-shrink-0" />
+                          )}
                           <span className="font-medium text-gray-900">{child.name}</span>
                         </Link>
                         {isAdmin && (
