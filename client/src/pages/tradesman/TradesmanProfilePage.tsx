@@ -220,19 +220,6 @@ export default function TradesmanProfilePage() {
               </div>
 
               <div className="space-y-6">
-                <div className="card bg-primary-50 border border-primary-200">
-                  <h3 className="font-semibold text-primary-900 mb-4">Ready to hire?</h3>
-                  <Link
-                    to={`/post-job?tradesman=${tradesman.tradesmanId}`}
-                    className="btn btn-accent btn-lg w-full"
-                  >
-                    Post a Job
-                  </Link>
-                  <p className="text-sm text-primary-800 mt-3">
-                    Contact this tradesperson directly by posting your job requirements.
-                  </p>
-                </div>
-
                 <div className="card">
                   <h3 className="font-semibold mb-3">Business Information</h3>
                   <div className="space-y-2 text-sm">

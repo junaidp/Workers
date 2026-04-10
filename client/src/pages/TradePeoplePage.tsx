@@ -185,18 +185,10 @@ export default function TradePeoplePage() {
                     <div className="flex gap-2">
                       <Link
                         to={`/tradesman/${tradesperson.tradesmanId}`}
-                        className="btn btn-primary btn-sm flex-1"
+                        className="btn btn-primary btn-sm w-full"
                       >
                         View Profile
                       </Link>
-                      <a
-                        href={`https://wa.me/92${tradesperson.user.whatsapp}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-secondary btn-sm"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </a>
                     </div>
                   </div>
                 ))}
