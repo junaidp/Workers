@@ -1,20 +1,23 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: 'gofatoorahhyphen11@gmail.com',
+    pass: 'hpubgqhmjsxvtkas'
+  },
+  tls: {
+    rejectUnauthorized: false
+  }
+});
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  if (!resend) {
-    throw new Error('RESEND_API_KEY is not configured');
-  }
-
-  const fromAddress = process.env.EMAIL_FROM;
-  if (!fromAddress) {
-    throw new Error('EMAIL_FROM is not configured');
-  }
+  const fromAddress = 'gofatoorahhyphen11@gmail.com';
 
   console.log('📧 Email Configuration:');
-  console.log(`   - Provider: Resend`);
+  console.log(`   - Provider: Gmail SMTP`);
   console.log(`   - From: ${fromAddress}`);
   console.log(`   - To: ${to}`);
   console.log(`   - Subject: ${subject}`);
@@ -22,7 +25,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
   const textFallback = html.replace(/<[^>]+>/g, '').trim();
 
   try {
-    await resend.emails.send({
+    await transporter.sendMail({
       from: fromAddress,
       to,
       subject,
@@ -31,7 +34,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     });
     console.log('✅ Email sent');
   } catch (error) {
-    console.error('❌ Resend email error:', error);
+    console.error('❌ Email error:', error);
     throw error;
   }
 }
@@ -43,16 +46,14 @@ export async function sendEmail(to: string, subject: string, html: string) {
 
 
 export async function verifyEmailConnection() {
-  if (!resendApiKey) {
-    console.error('❌ RESEND_API_KEY not configured');
+  try {
+    await transporter.verify();
+    console.log('✅ Gmail SMTP email provider configured');
+    return true;
+  } catch (error) {
+    console.error('❌ Gmail SMTP connection failed:', error);
     return false;
   }
-  if (!process.env.EMAIL_FROM) {
-    console.error('❌ EMAIL_FROM not configured');
-    return false;
-  }
-  console.log('✅ Resend email provider configured');
-  return true;
 }
 
 export async function sendWhatsApp(phoneNumber: string, message: string) {

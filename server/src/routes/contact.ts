@@ -21,25 +21,18 @@ router.post('/', async (req, res) => {
       }
     });
 
-    const admins = await prisma.admin.findMany({
-      include: { user: true }
-    });
-
-    for (const admin of admins) {
-      if (admin.user.email) {
-        await sendEmail(
-          admin.user.email,
-          `New Contact Message: ${subject}`,
-          `
-            <h3>New Contact Message</h3>
-            <p><strong>From:</strong> ${name} (${email})</p>
-            <p><strong>Subject:</strong> ${subject}</p>
-            <p><strong>Message:</strong></p>
-            <p>${message}</p>
-          `
-        );
-      }
-    }
+    // Send to admin email
+    await sendEmail(
+      'junaidp2@hotmail.com',
+      `New Contact Message: ${subject}`,
+      `
+        <h3>New Contact Message</h3>
+        <p><strong>From:</strong> ${name} (${email})</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
+      `
+    );
 
     await sendEmail(
       email,

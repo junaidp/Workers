@@ -5,6 +5,7 @@ import Layout from '../components/Layout/Layout'
 import api from '../lib/api'
 import { pakistanCities } from '../lib/utils'
 import { useAuthStore } from '../stores/authStore'
+import { getImageUrl } from '../lib/imageUtils'
 
 export default function TradePeoplePage() {
   const [tradespeople, setTradespeople] = useState<any[]>([])
@@ -14,8 +15,21 @@ export default function TradePeoplePage() {
   const [showPending, setShowPending] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [expandedServices, setExpandedServices] = useState<Set<string>>(new Set())
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'ADMIN'
+
+  const toggleServices = (tradesmanId: string) => {
+    setExpandedServices(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(tradesmanId)) {
+        newSet.delete(tradesmanId)
+      } else {
+        newSet.add(tradesmanId)
+      }
+      return newSet
+    })
+  }
 
   useEffect(() => {
     fetchTradespeople()
@@ -125,7 +139,7 @@ export default function TradePeoplePage() {
                   <div key={tradesperson.id} className="card hover:shadow-lg transition-shadow">
                     <div className="flex items-start space-x-4 mb-4">
                       <img
-                        src={tradesperson.profilePicture || '/default-avatar.png'}
+                        src={tradesperson.profilePicture ? getImageUrl(tradesperson.profilePicture) : '/default-avatar.png'}
                         alt={tradesperson.businessName}
                         className="w-20 h-20 rounded-full object-cover"
                       />
@@ -156,15 +170,24 @@ export default function TradePeoplePage() {
                     <div className="mb-4">
                       <p className="text-sm font-semibold text-gray-700 mb-2">Services:</p>
                       <div className="flex flex-wrap gap-2">
-                        {tradesperson.services.slice(0, 3).map((ts: any) => (
+                        {(expandedServices.has(tradesperson.id) 
+                          ? tradesperson.services 
+                          : tradesperson.services.slice(0, 3)
+                        ).map((ts: any) => (
                           <span key={ts.id} className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded">
                             {ts.service.name}
                           </span>
                         ))}
                         {tradesperson.services.length > 3 && (
-                          <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                            +{tradesperson.services.length - 3} more
-                          </span>
+                          <button
+                            onClick={() => toggleServices(tradesperson.id)}
+                            className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200 transition-colors cursor-pointer"
+                          >
+                            {expandedServices.has(tradesperson.id) 
+                              ? 'Show less' 
+                              : `+${tradesperson.services.length - 3} more`
+                            }
+                          </button>
                         )}
                       </div>
                     </div>

@@ -70,53 +70,71 @@ export default function AdminDashboard() {
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 mb-8">
-                <div className="card">
+                <button 
+                  onClick={() => setActiveTab('users')}
+                  className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+                >
                   <div className="text-center">
                     <Users className="w-8 h-8 text-primary-600 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-gray-900">{stats?.totalCustomers || 0}</p>
                     <p className="text-sm text-gray-600">Customers</p>
                   </div>
-                </div>
+                </button>
 
-                <div className="card">
+                <button 
+                  onClick={() => setActiveTab('users')}
+                  className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+                >
                   <div className="text-center">
                     <Award className="w-8 h-8 text-purple-600 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-gray-900">{stats?.totalTradesmen || 0}</p>
                     <p className="text-sm text-gray-600">Tradesmen</p>
                   </div>
-                </div>
+                </button>
 
-                <div className="card">
+                <button 
+                  onClick={() => setActiveTab('pending')}
+                  className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+                >
                   <div className="text-center">
                     <Clock className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-gray-900">{stats?.pendingTradesmen || 0}</p>
                     <p className="text-sm text-gray-600">Pending</p>
                   </div>
-                </div>
+                </button>
 
-                <div className="card">
+                <button 
+                  onClick={() => setActiveTab('reports')}
+                  className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+                >
                   <div className="text-center">
                     <Briefcase className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-gray-900">{stats?.totalJobs || 0}</p>
                     <p className="text-sm text-gray-600">Total Jobs</p>
                   </div>
-                </div>
+                </button>
 
-                <div className="card">
+                <button 
+                  onClick={() => setActiveTab('reports')}
+                  className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+                >
                   <div className="text-center">
                     <Clock className="w-8 h-8 text-orange-600 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-gray-900">{stats?.activeJobs || 0}</p>
                     <p className="text-sm text-gray-600">Active Jobs</p>
                   </div>
-                </div>
+                </button>
 
-                <div className="card">
+                <button 
+                  onClick={() => setActiveTab('reports')}
+                  className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
+                >
                   <div className="text-center">
                     <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-gray-900">{stats?.completedJobs || 0}</p>
                     <p className="text-sm text-gray-600">Completed</p>
                   </div>
-                </div>
+                </button>
               </div>
 
               <div className="card">

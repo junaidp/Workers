@@ -4,6 +4,7 @@ import { Star, MapPin, Award, Image as ImageIcon, FileText, Phone, MessageCircle
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
 import { formatDate } from '../../lib/utils'
+import { getImageUrl } from '../../lib/imageUtils'
 
 export default function TradesmanProfilePage() {
   const { tradesmanId } = useParams()
@@ -70,7 +71,7 @@ export default function TradesmanProfilePage() {
             <div className="card mb-6">
               <div className="flex flex-col md:flex-row gap-6">
                 <img
-                  src={tradesman.profilePicture}
+                  src={tradesman.profilePicture ? getImageUrl(tradesman.profilePicture) : '/default-avatar.png'}
                   alt={tradesman.businessName}
                   className="w-32 h-32 rounded-full object-cover"
                 />

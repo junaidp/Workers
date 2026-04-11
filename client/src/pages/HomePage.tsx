@@ -58,6 +58,7 @@ export default function HomePage() {
 
   const handleServiceSelect = (serviceName: string) => {
     setSearchQuery(serviceName)
+    setFilteredServices([])
     setShowSuggestions(false)
   }
 
