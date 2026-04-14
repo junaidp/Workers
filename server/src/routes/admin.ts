@@ -431,7 +431,7 @@ router.put('/category/:id/image', authenticate, authorize('ADMIN'), upload.singl
     const folder = req.body.folder || 'general';
     const imagePath = `/uploads/${folder}/${file.filename}`;
 
-    const category = await prisma.category.update({
+    const category = await prisma.serviceCategory.update({
       where: { id: idString },
       data: {
         image: imagePath
