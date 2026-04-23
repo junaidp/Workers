@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, Briefcase, CheckCircle, Clock, Award, Eye, X, Check } from 'lucide-react'
+import { Users, Briefcase, CheckCircle, Clock, Award, Eye, X, Check, Edit } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
@@ -8,7 +8,10 @@ import { formatDateTime } from '../../lib/utils'
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null)
   const [pendingTradesmen, setPendingTradesmen] = useState<any[]>([])
+  const [allTradesmen, setAllTradesmen] = useState<any[]>([])
   const [selectedTradesman, setSelectedTradesman] = useState<any>(null)
+  const [editingTradesman, setEditingTradesman] = useState<any>(null)
+  const [editFormData, setEditFormData] = useState<any>({})
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'pending' | 'users' | 'reports'>('pending')
 
@@ -18,12 +21,14 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, tradesmenRes] = await Promise.all([
+      const [statsRes, tradesmenRes, allTradesmenRes] = await Promise.all([
         api.get('/admin/dashboard/stats'),
-        api.get('/admin/tradesmen/pending')
+        api.get('/admin/tradesmen/pending'),
+        api.get('/admin/tradesmen/all')
       ])
       setStats(statsRes.data)
       setPendingTradesmen(tradesmenRes.data)
+      setAllTradesmen(allTradesmenRes.data)
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -51,6 +56,29 @@ export default function AdminDashboard() {
       setSelectedTradesman(null)
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to reject tradesman')
+    }
+  }
+
+  const handleEditTradesman = async (tradesman: any) => {
+    setEditingTradesman(tradesman)
+    setEditFormData({
+      businessName: tradesman.businessName,
+      description: tradesman.description,
+      city: tradesman.city,
+      town: tradesman.town,
+      rating: tradesman.rating,
+      reviewCount: tradesman.reviewCount
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    try {
+      await api.put(`/admin/tradesman/${editingTradesman.id}`, editFormData)
+      toast.success('Tradesman updated successfully')
+      fetchDashboardData()
+      setEditingTradesman(null)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update tradesman')
     }
   }
 
@@ -232,8 +260,46 @@ export default function AdminDashboard() {
                 )}
 
                 {activeTab === 'users' && (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600">User management interface</p>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">All Tradespeople</h3>
+                    {allTradesmen.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-600">No tradespeople found</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {allTradesmen.map(tradesman => (
+                          <div key={tradesman.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg">{tradesman.businessName}</h3>
+                                <p className="text-sm text-gray-600">
+                                  {tradesman.user.firstName} {tradesman.user.lastName}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Location: {tradesman.town}, {tradesman.city}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Rating: {tradesman.rating.toFixed(1)} | Reviews: {tradesman.reviewCount}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Status: {tradesman.isApproved ? 'Approved' : 'Pending'}
+                                </p>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEditTradesman(tradesman)}
+                                  className="btn btn-secondary btn-sm"
+                                >
+                                  <Edit className="w-4 h-4 mr-1" />
+                                  Edit
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -244,6 +310,107 @@ export default function AdminDashboard() {
                 )}
               </div>
             </>
+          )}
+
+          {editingTradesman && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-6">
+                    <h2 className="text-2xl font-bold">Edit Tradesperson Profile</h2>
+                    <button
+                      onClick={() => setEditingTradesman(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="label">Business Name</label>
+                      <input
+                        type="text"
+                        className="input"
+                        value={editFormData.businessName}
+                        onChange={(e) => setEditFormData({...editFormData, businessName: e.target.value})}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label">Description</label>
+                      <textarea
+                        className="input"
+                        rows={4}
+                        value={editFormData.description}
+                        onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="label">City</label>
+                        <input
+                          type="text"
+                          className="input"
+                          value={editFormData.city}
+                          onChange={(e) => setEditFormData({...editFormData, city: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="label">Town</label>
+                        <input
+                          type="text"
+                          className="input"
+                          value={editFormData.town}
+                          onChange={(e) => setEditFormData({...editFormData, town: e.target.value})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="label">Rating (0-5)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="5"
+                          className="input"
+                          value={editFormData.rating}
+                          onChange={(e) => setEditFormData({...editFormData, rating: parseFloat(e.target.value)})}
+                        />
+                      </div>
+                      <div>
+                        <label className="label">Review Count</label>
+                        <input
+                          type="number"
+                          min="0"
+                          className="input"
+                          value={editFormData.reviewCount}
+                          onChange={(e) => setEditFormData({...editFormData, reviewCount: parseInt(e.target.value)})}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4 pt-4 border-t">
+                      <button
+                        onClick={handleSaveEdit}
+                        className="btn btn-primary btn-lg flex-1"
+                      >
+                        Save Changes
+                      </button>
+                      <button
+                        onClick={() => setEditingTradesman(null)}
+                        className="btn btn-secondary btn-lg flex-1"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {selectedTradesman && (

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Search, CheckCircle, Users, Shield, Star, ArrowRight, Wrench, Zap, Home } from 'lucide-react'
 import Layout from '../components/Layout/Layout'
 import api from '../lib/api'
+import { getImageUrl } from '../lib/imageUtils'
 
 export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([])
@@ -56,10 +57,33 @@ export default function HomePage() {
     }
   }
 
+  const [selectedIndex, setSelectedIndex] = useState(-1)
+
   const handleServiceSelect = (serviceName: string) => {
     setSearchQuery(serviceName)
     setFilteredServices([])
     setShowSuggestions(false)
+    setSelectedIndex(-1)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSuggestions || filteredServices.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex(prev => 
+        prev < filteredServices.length - 1 ? prev + 1 : prev
+      )
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex(prev => prev > 0 ? prev - 1 : -1)
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+      e.preventDefault()
+      handleServiceSelect(filteredServices[selectedIndex].name)
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false)
+      setSelectedIndex(-1)
+    }
   }
 
   return (
@@ -84,14 +108,17 @@ export default function HomePage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
+                    onKeyDown={handleKeyDown}
                   />
                   {showSuggestions && filteredServices.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                      {filteredServices.map((service) => (
+                      {filteredServices.map((service, index) => (
                         <button
                           key={service.id}
                           onClick={() => handleServiceSelect(service.name)}
-                          className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-b-0"
+                          className={`w-full text-left px-4 py-3 transition-colors border-b border-gray-100 last:border-b-0 ${
+                            index === selectedIndex ? 'bg-primary-100' : 'hover:bg-primary-50'
+                          }`}
                         >
                           <div className="font-medium text-gray-900">{service.name}</div>
                           <div className="text-sm text-gray-500">{service.categoryName}</div>
@@ -192,8 +219,16 @@ export default function HomePage() {
                 to={`/services/${category.slug}`}
                 className="card hover:shadow-lg transition-shadow text-center group"
               >
-                <div className="w-16 h-16 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-600 group-hover:text-white transition-colors">
-                  <Wrench className="w-8 h-8" />
+                <div className="w-16 h-16 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-primary-600 group-hover:text-white transition-colors overflow-hidden">
+                  {category.image ? (
+                    <img 
+                      src={getImageUrl(category.image)} 
+                      alt={category.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Wrench className="w-8 h-8" />
+                  )}
                 </div>
                 <h3 className="font-semibold text-sm md:text-base">{category.name}</h3>
               </Link>

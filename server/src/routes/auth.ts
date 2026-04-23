@@ -229,17 +229,39 @@ router.post('/verify', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
-    const { mobile, email, password } = req.body;
+    const { username, password } = req.body;
 
-    if (!mobile && !email) {
-      return res.status(400).json({ message: 'Mobile or email required' });
+    if (!username) {
+      return res.status(400).json({ message: 'Username required' });
     }
 
+    // Check for hardcoded admin account
+    if (username === '111111111' && password === '111111111') {
+      const token = jwt.sign(
+        { userId: 'admin-hardcoded', role: 'ADMIN' },
+        process.env.JWT_SECRET!,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
+      );
+
+      return res.json({
+        token,
+        user: {
+          id: 'admin-hardcoded',
+          role: 'ADMIN',
+          email: 'admin@workershub.com',
+          mobile: '111111111',
+          admin: {}
+        }
+      });
+    }
+
+    // Check if username is email or mobile
+    const isEmail = username.includes('@');
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          ...(mobile ? [{ mobile }] : []),
-          ...(email ? [{ email }] : [])
+          { mobile: username },
+          { email: username }
         ],
         isActive: true
       },

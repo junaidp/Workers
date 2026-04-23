@@ -184,15 +184,65 @@ router.post('/tradesman/:id/reject', authenticate, authorize('ADMIN'), async (re
   }
 });
 
+router.get('/tradesman/:id', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
+
+    const tradesman = await prisma.tradesman.findUnique({
+      where: { id: idString },
+      include: {
+        user: true,
+        services: {
+          include: {
+            service: {
+              include: {
+                category: true
+              }
+            }
+          }
+        },
+        portfolioImages: true,
+        certifications: true,
+        reviews: {
+          include: {
+            customer: {
+              include: {
+                user: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!tradesman) {
+      return res.status(404).json({ message: 'Tradesman not found' });
+    }
+
+    res.json(tradesman);
+  } catch (error) {
+    console.error('Get tradesman error:', error);
+    res.status(500).json({ message: 'Failed to get tradesman' });
+  }
+});
+
 router.put('/tradesman/:id', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
-    const { badge, isVisible, prepaidCredit } = req.body;
+    const { badge, isVisible, prepaidCredit, rating, reviewCount, businessName, description, city, town } = req.body;
     const idString = Array.isArray(id) ? id[0] : id;
 
     const updateData: any = {};
     if (badge) updateData.badge = badge;
     if (isVisible !== undefined) updateData.isVisible = isVisible;
+    if (rating !== undefined) updateData.rating = parseFloat(rating);
+    if (reviewCount !== undefined) updateData.reviewCount = parseInt(reviewCount);
+    if (businessName) updateData.businessName = businessName;
+    if (description) updateData.description = description;
+    if (city) updateData.city = city;
+    if (town) updateData.town = town;
+    
     if (prepaidCredit !== undefined) {
       const tradesman = await prisma.tradesman.findUnique({ where: { id: idString } });
       if (tradesman) {
@@ -213,7 +263,15 @@ router.put('/tradesman/:id', authenticate, authorize('ADMIN'), async (req: AuthR
 
     const tradesman = await prisma.tradesman.update({
       where: { id: idString },
-      data: updateData
+      data: updateData,
+      include: {
+        user: true,
+        services: {
+          include: {
+            service: true
+          }
+        }
+      }
     });
 
     res.json({ message: 'Tradesman updated successfully', tradesman });
@@ -431,7 +489,7 @@ router.put('/category/:id/image', authenticate, authorize('ADMIN'), upload.singl
     const folder = req.body.folder || 'general';
     const imagePath = `/uploads/${folder}/${file.filename}`;
 
-    const category = await prisma.serviceCategory.update({
+    const category = await prisma.servic  eCategory.update({
       where: { id: idString },
       data: {
         image: imagePath
