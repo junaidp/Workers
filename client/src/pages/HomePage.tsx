@@ -11,6 +11,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filteredServices, setFilteredServices] = useState<any[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [isInputFocused, setIsInputFocused] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -35,11 +36,15 @@ export default function HomePage() {
       )
       setFilteredServices(filtered.slice(0, 10))
       setShowSuggestions(true)
+    } else if (isInputFocused) {
+      // Show all services when input is focused but empty
+      setFilteredServices(allServices.slice(0, 10))
+      setShowSuggestions(true)
     } else {
       setFilteredServices([])
       setShowSuggestions(false)
     }
-  }, [searchQuery, allServices])
+  }, [searchQuery, allServices, isInputFocused])
 
   const fetchCategories = async () => {
     try {
@@ -64,6 +69,11 @@ export default function HomePage() {
     setFilteredServices([])
     setShowSuggestions(false)
     setSelectedIndex(-1)
+    // Keep focus on input after selection
+    const inputElement = document.querySelector('input[type="text"]') as HTMLInputElement
+    if (inputElement) {
+      inputElement.focus()
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -72,11 +82,11 @@ export default function HomePage() {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       setSelectedIndex(prev => 
-        prev < filteredServices.length - 1 ? prev + 1 : prev
+        prev < filteredServices.length - 1 ? prev + 1 : 0
       )
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setSelectedIndex(prev => prev > 0 ? prev - 1 : -1)
+      setSelectedIndex(prev => prev > 0 ? prev - 1 : filteredServices.length - 1)
     } else if (e.key === 'Enter' && selectedIndex >= 0) {
       e.preventDefault()
       handleServiceSelect(filteredServices[selectedIndex].name)
@@ -107,7 +117,19 @@ export default function HomePage() {
                     className="w-full px-4 py-3 text-gray-900 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
+                    onFocus={() => {
+                      setIsInputFocused(true)
+                      if (!searchQuery.trim()) {
+                        setShowSuggestions(true)
+                      }
+                    }}
+                    onBlur={() => {
+                      setIsInputFocused(false)
+                      // Delay hiding suggestions to allow click events to fire
+                      setTimeout(() => {
+                        setShowSuggestions(false)
+                      }, 200)
+                    }}
                     onKeyDown={handleKeyDown}
                   />
                   {showSuggestions && filteredServices.length > 0 && (
