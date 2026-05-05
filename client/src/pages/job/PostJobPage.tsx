@@ -143,6 +143,10 @@ export default function PostJobPage() {
     if (!showDescription) {
       setShowDescription(true)
     }
+    // Show photos section immediately when sub-service is selected
+    if (!showPhotos) {
+      setShowPhotos(true)
+    }
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -374,60 +378,58 @@ export default function PostJobPage() {
                     <h3 className="text-lg font-semibold mb-2">Describe your job</h3>
                     <p className="text-gray-600 mb-4 text-sm">Provide details to help tradespeople understand your requirements (Optional)</p>
                     <textarea
-                      className="input"
+                      className="input mb-6"
                       rows={4}
                       placeholder="E.g., I need to install a ceiling fan in my bedroom. The fan is already purchased."
                       value={formData.description}
                       onChange={(e) => {
                         setFormData(prev => ({ ...prev, description: e.target.value }))
-                        if (!showPhotos && e.target.value.trim()) {
-                          setShowPhotos(true)
-                        }
                       }}
                     />
-                  </div>
-                )}
 
-                {showPhotos && (
-                  <div className="border-t pt-6">
-                    <h3 className="text-lg font-semibold mb-2">Add photos (Optional)</h3>
-                    <p className="text-gray-600 mb-4 text-sm">Photos help tradespeople understand the job better</p>
-                    
-                    <div className="space-y-4">
-                      <label className="btn btn-secondary btn-md cursor-pointer inline-flex">
-                        <Upload className="w-5 h-5 mr-2" />
-                        Upload Photos
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                          className="hidden"
-                        />
-                      </label>
+                    {showPhotos && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Add photos (Optional)</h3>
+                        <p className="text-gray-600 mb-4 text-sm">Photos help tradespeople understand the job better</p>
+                        
+                        <div className="space-y-4">
+                          <label className="btn btn-secondary btn-md cursor-pointer inline-flex">
+                            <Upload className="w-5 h-5 mr-2" />
+                            Upload Photos
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="hidden"
+                            />
+                          </label>
 
-                      {images.length > 0 && (
-                        <div className="grid grid-cols-3 gap-4">
-                          {images.map((image, index) => (
-                            <div key={index} className="relative">
-                              <img
-                                src={URL.createObjectURL(image)}
-                                alt={`Upload ${index + 1}`}
-                                className="w-full h-32 object-cover rounded-lg"
-                              />
-                              <button
-                                onClick={() => removeImage(index)}
-                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                              >
-                                ×
-                              </button>
+                          {images.length > 0 && (
+                            <div className="grid grid-cols-3 gap-4">
+                              {images.map((image, index) => (
+                                <div key={index} className="relative">
+                                  <img
+                                    src={URL.createObjectURL(image)}
+                                    alt={`Upload ${index + 1}`}
+                                    className="w-full h-32 object-cover rounded-lg"
+                                  />
+                                  <button
+                                    onClick={() => removeImage(index)}
+                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
+
               </div>
             )}
 
