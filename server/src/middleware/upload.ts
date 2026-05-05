@@ -15,14 +15,19 @@ if (!fs.existsSync(uploadsDir)) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const folder = req.body.folder || 'general';
-    const dir = path.join(uploadsDir, folder);
-    
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    // For job uploads, store directly in uploads directory
+    if (req.originalUrl && req.originalUrl.includes('/jobs')) {
+      cb(null, uploadsDir);
+    } else {
+      const folder = req.body.folder || 'general';
+      const dir = path.join(uploadsDir, folder);
+      
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      cb(null, dir);
     }
-    
-    cb(null, dir);
   },
   filename: (req, file, cb) => {
     const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;

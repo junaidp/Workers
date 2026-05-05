@@ -85,7 +85,7 @@ router.post('/', authenticate, authorize('CUSTOMER'), upload.array('images', 5),
     }
 
     const jobId = await generateJobId();
-    const images = (req.files as Express.Multer.File[])?.map(file => `/uploads/general/${file.filename}`) || [];
+    const images = (req.files as Express.Multer.File[])?.map(file => `/uploads/${file.filename}`) || [];
 
     const job = await prisma.job.create({
       data: {
