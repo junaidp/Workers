@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
-import { upload } from '../middleware/upload.js';
+import { cloudinaryUpload, uploadToCloudinaryMiddleware } from '../middleware/cloudinaryUpload.js';
 import { generateJobId } from '../utils/idGenerator.js';
 import { sendWhatsApp } from '../utils/notifications.js';
 import { notifyTradesmenForJob } from '../services/jobMatcher.js';
@@ -36,7 +36,7 @@ function normalizeServiceIds(raw: unknown): string[] {
   return [];
 }
 
-router.post('/', authenticate, authorize('CUSTOMER'), upload.array('images', 5), async (req: AuthRequest, res) => {
+router.post('/', authenticate, authorize('CUSTOMER'), cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const {
       serviceIds,
@@ -85,7 +85,7 @@ router.post('/', authenticate, authorize('CUSTOMER'), upload.array('images', 5),
     }
 
     const jobId = await generateJobId();
-    const images = (req.files as Express.Multer.File[])?.map(file => `/uploads/${file.filename}`) || [];
+    const images = (req.files as any[])?.map(file => file.url) || [];
 
     const job = await prisma.job.create({
       data: {
