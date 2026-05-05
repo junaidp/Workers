@@ -30,8 +30,11 @@ export const uploadToCloudinaryMiddleware = async (req: Request, res: Response, 
       return next();
     }
 
+    console.log('Processing', req.files.length, 'files for Cloudinary upload');
+
     // Upload each file to Cloudinary
     const uploadPromises = (req.files as Express.Multer.File[]).map(async (file) => {
+      console.log('Uploading file:', file.originalname, 'Size:', file.size);
       const url = await uploadToCloudinary(file);
       return {
         originalname: file.originalname,
@@ -42,6 +45,8 @@ export const uploadToCloudinaryMiddleware = async (req: Request, res: Response, 
     });
 
     const uploadedFiles = await Promise.all(uploadPromises);
+    
+    console.log('All files uploaded successfully:', uploadedFiles.map(f => f.url));
     
     // Replace req.files with Cloudinary URLs
     req.files = uploadedFiles as any;

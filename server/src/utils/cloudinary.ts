@@ -3,40 +3,32 @@ import { Readable } from 'stream';
 
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: 'dx5xvlojc',
-  api_key: '277458255413249',
-  api_secret: 'xIi8gXM3vDFjZGbhLhNIhhJNCs'
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dx5xvlojc',
+  api_key: process.env.CLOUDINARY_API_KEY || '277458255413249',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'xIi8gXM3vDFjZGbhLhNIhhJNCs'
 });
 
+console.log('Cloudinary configured with cloud_name:', process.env.CLOUDINARY_CLOUD_NAME || 'dx5xvlojc');
+
 export const uploadToCloudinary = async (file: Express.Multer.File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
+  try {
+    console.log('Starting Cloudinary upload for file:', file.originalname);
+    
+    // Use the simpler upload method with buffer
+    const result = await cloudinary.uploader.upload(
+      `data:image/jpeg;base64,${file.buffer.toString('base64')}`,
       {
         folder: 'job-images',
-        resource_type: 'image',
-        format: 'webp',
-        quality: 'auto:good',
-        fetch_format: 'auto'
-      },
-      (error, result) => {
-        if (error) {
-          reject(error);
-        } else if (result) {
-          resolve(result.secure_url);
-        } else {
-          reject(new Error('Unknown error during upload'));
-        }
+        resource_type: 'image'
       }
     );
-
-    // Create a readable stream from the buffer
-    const readableStream = new Readable();
-    readableStream._read = () => {}; // _read is required but you can noop it
-    readableStream.push(file.buffer);
-    readableStream.push(null);
-
-    readableStream.pipe(uploadStream);
-  });
+    
+    console.log('Cloudinary upload successful:', result.secure_url);
+    return result.secure_url;
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw error;
+  }
 };
 
 export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
