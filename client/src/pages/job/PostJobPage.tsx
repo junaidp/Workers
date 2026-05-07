@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
 import { pakistanCities } from '../../lib/utils'
+import { lahoreLocations } from '../../lib/constants'
 import { useAuthStore } from '../../stores/authStore'
 import { getServiceIcon } from '../../lib/serviceIcons'
 import { getImageUrl } from '../../lib/imageUtils'
@@ -456,14 +457,17 @@ export default function PostJobPage() {
 
                   <div>
                     <label className="label">Area/Town *</label>
-                    <input
-                      type="text"
+                    <select
                       className="input"
-                      placeholder="E.g., Clifton, DHA Phase 5"
                       value={formData.area}
                       onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
                       required
-                    />
+                    >
+                      <option value="">Select Area/Town</option>
+                      {lahoreLocations.map(location => (
+                        <option key={location.name} value={location.name}>{location.name}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>

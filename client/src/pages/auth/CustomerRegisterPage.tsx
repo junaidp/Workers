@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
 import { pakistanCities } from '../../lib/utils'
+import { lahoreLocations } from '../../lib/constants'
 
 export default function CustomerRegisterPage() {
   const [formData, setFormData] = useState({
@@ -152,15 +153,19 @@ export default function CustomerRegisterPage() {
                   <label htmlFor="area" className="label">
                     Area/Town <span className="text-red-500">*</span>
                   </label>
-                  <input
+                  <select
                     id="area"
                     name="area"
-                    type="text"
                     required
                     className="input"
                     value={formData.area}
                     onChange={handleChange}
-                  />
+                  >
+                    <option value="">Select Area/Town</option>
+                    {lahoreLocations.map(location => (
+                      <option key={location.name} value={location.name}>{location.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

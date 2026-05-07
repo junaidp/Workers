@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
 import { pakistanCities } from '../../lib/utils'
+import { lahoreLocations } from '../../lib/constants'
 
 export default function TradesmanRegisterPage() {
   const [categories, setCategories] = useState<any[]>([])
@@ -193,7 +194,12 @@ export default function TradesmanRegisterPage() {
                     </div>
                     <div>
                       <label className="label">Town <span className="text-red-500">*</span></label>
-                      <input name="town" required className="input" value={formData.town} onChange={handleChange} />
+                      <select name="town" required className="input" value={formData.town} onChange={handleChange}>
+                        <option value="">Select Town</option>
+                        {lahoreLocations.map(location => (
+                          <option key={location.name} value={location.name}>{location.name}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="label">City <span className="text-red-500">*</span></label>
