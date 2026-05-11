@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Briefcase, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -20,7 +20,7 @@ export default function TradesmanRegisterPage() {
     buildingNumber: '',
     street: '',
     town: '',
-    city: '',
+    city: 'Lahore',
     description: '',
     whatsapp: '',
     mobile: '',
@@ -28,6 +28,10 @@ export default function TradesmanRegisterPage() {
     website: '',
     cnicNumber: '',
   })
+  const [townSearchQuery, setTownSearchQuery] = useState('')
+  const [filteredTowns, setFilteredTowns] = useState<any[]>([])
+  const [showTownSuggestions, setShowTownSuggestions] = useState(false)
+  const townSearchRef = useRef<HTMLDivElement>(null)
   const [files, setFiles] = useState<any>({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -35,6 +39,29 @@ export default function TradesmanRegisterPage() {
   useEffect(() => {
     fetchCategories()
   }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (townSearchRef.current && !townSearchRef.current.contains(event.target as Node)) {
+        setShowTownSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (townSearchQuery.trim()) {
+      const filtered = lahoreLocations.filter(location =>
+        location.name.toLowerCase().includes(townSearchQuery.toLowerCase())
+      )
+      setFilteredTowns(filtered.slice(0, 10))
+      setShowTownSuggestions(true)
+    } else {
+      setFilteredTowns([])
+      setShowTownSuggestions(false)
+    }
+  }, [townSearchQuery])
 
   const fetchCategories = async () => {
     try {
@@ -79,8 +106,8 @@ export default function TradesmanRegisterPage() {
       return
     }
 
-    if (!files.profilePicture || !files.cnicImage) {
-      toast.error('Please upload all required documents')
+    if (!files.cnicImage) {
+      toast.error('Please upload CNIC image')
       return
     }
 
@@ -194,20 +221,43 @@ export default function TradesmanRegisterPage() {
                     </div>
                     <div>
                       <label className="label">Town <span className="text-red-500">*</span></label>
-                      <select name="town" required className="input" value={formData.town} onChange={handleChange}>
-                        <option value="">Select Town</option>
-                        {lahoreLocations.map(location => (
-                          <option key={location.name} value={location.name}>{location.name}</option>
-                        ))}
-                      </select>
+                      <div className="relative" ref={townSearchRef}>
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="Type to search town..."
+                          value={townSearchQuery || formData.town}
+                          onChange={(e) => {
+                            setTownSearchQuery(e.target.value)
+                            setFormData(prev => ({ ...prev, town: '' }))
+                          }}
+                          onFocus={() => townSearchQuery.trim() && setShowTownSuggestions(true)}
+                          required
+                        />
+                        {showTownSuggestions && filteredTowns.length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            {filteredTowns.map((location) => (
+                              <button
+                                key={location.name}
+                                type="button"
+                                onClick={() => {
+                                  setFormData(prev => ({ ...prev, town: location.name }))
+                                  setTownSearchQuery('')
+                                  setShowTownSuggestions(false)
+                                }}
+                                className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900">{location.name}</div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <label className="label">City <span className="text-red-500">*</span></label>
-                      <select name="city" required className="input" value={formData.city} onChange={handleChange}>
-                        <option value="">Select City</option>
-                        {pakistanCities.map(city => (
-                          <option key={city} value={city}>{city}</option>
-                        ))}
+                      <select name="city" required className="input bg-gray-100 cursor-not-allowed" value={formData.city} disabled>
+                        <option value="Lahore">Lahore</option>
                       </select>
                     </div>
                   </div>
@@ -246,8 +296,8 @@ export default function TradesmanRegisterPage() {
                 <h3 className="text-lg font-semibold mb-4">Documents</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="label">Profile Picture <span className="text-red-500">*</span></label>
-                    <input type="file" accept="image/*" required onChange={(e) => handleFileChange(e, 'profilePicture')} className="input" />
+                    <label className="label">Profile Picture <span className="text-gray-500">(Optional)</span></label>
+                    <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'profilePicture')} className="input" />
                   </div>
                   <div>
                     <label className="label">CNIC Image <span className="text-red-500">*</span></label>

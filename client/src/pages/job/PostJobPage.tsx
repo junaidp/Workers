@@ -30,7 +30,7 @@ export default function PostJobPage() {
   const [hasPreSelectedService, setHasPreSelectedService] = useState(false)
   const [formData, setFormData] = useState({
     description: '',
-    city: '',
+    city: 'Lahore',
     area: '',
     preferredDate: '',
     preferredTime: '',
@@ -40,6 +40,10 @@ export default function PostJobPage() {
     mobile: '',
     countryCode: '+92',
   })
+  const [areaSearchQuery, setAreaSearchQuery] = useState('')
+  const [filteredAreas, setFilteredAreas] = useState<any[]>([])
+  const [showAreaSuggestions, setShowAreaSuggestions] = useState(false)
+  const areaSearchRef = useRef<HTMLDivElement>(null)
   const [images, setImages] = useState<File[]>([])
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -68,6 +72,9 @@ export default function PostJobPage() {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false)
       }
+      if (areaSearchRef.current && !areaSearchRef.current.contains(event.target as Node)) {
+        setShowAreaSuggestions(false)
+      }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -85,6 +92,19 @@ export default function PostJobPage() {
       setShowSuggestions(false)
     }
   }, [searchQuery, allServices])
+
+  useEffect(() => {
+    if (areaSearchQuery.trim()) {
+      const filtered = lahoreLocations.filter(location =>
+        location.name.toLowerCase().includes(areaSearchQuery.toLowerCase())
+      )
+      setFilteredAreas(filtered.slice(0, 10))
+      setShowAreaSuggestions(true)
+    } else {
+      setFilteredAreas([])
+      setShowAreaSuggestions(false)
+    }
+  }, [areaSearchQuery])
 
   const fetchCategories = async () => {
     try {
@@ -443,31 +463,49 @@ export default function PostJobPage() {
                   <div>
                     <label className="label">City *</label>
                     <select
-                      className="input"
+                      className="input bg-gray-100 cursor-not-allowed"
                       value={formData.city}
-                      onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
+                      disabled
                       required
                     >
-                      <option value="">Select City</option>
-                      {pakistanCities.map(city => (
-                        <option key={city} value={city}>{city}</option>
-                      ))}
+                      <option value="Lahore">Lahore</option>
                     </select>
                   </div>
 
                   <div>
                     <label className="label">Area/Town *</label>
-                    <select
-                      className="input"
-                      value={formData.area}
-                      onChange={(e) => setFormData(prev => ({ ...prev, area: e.target.value }))}
-                      required
-                    >
-                      <option value="">Select Area/Town</option>
-                      {lahoreLocations.map(location => (
-                        <option key={location.name} value={location.name}>{location.name}</option>
-                      ))}
-                    </select>
+                    <div className="relative" ref={areaSearchRef}>
+                      <input
+                        type="text"
+                        className="input"
+                        placeholder="Type to search area/town..."
+                        value={areaSearchQuery || formData.area}
+                        onChange={(e) => {
+                          setAreaSearchQuery(e.target.value)
+                          setFormData(prev => ({ ...prev, area: '' }))
+                        }}
+                        onFocus={() => areaSearchQuery.trim() && setShowAreaSuggestions(true)}
+                        required
+                      />
+                      {showAreaSuggestions && filteredAreas.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {filteredAreas.map((location) => (
+                            <button
+                              key={location.name}
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, area: location.name }))
+                                setAreaSearchQuery('')
+                                setShowAreaSuggestions(false)
+                              }}
+                              className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="font-medium text-gray-900">{location.name}</div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

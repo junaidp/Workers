@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -13,11 +13,38 @@ export default function CustomerRegisterPage() {
     email: '',
     mobile: '',
     whatsapp: '',
-    city: '',
+    city: 'Lahore',
     area: '',
   })
+  const [areaSearchQuery, setAreaSearchQuery] = useState('')
+  const [filteredAreas, setFilteredAreas] = useState<any[]>([])
+  const [showAreaSuggestions, setShowAreaSuggestions] = useState(false)
+  const areaSearchRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (areaSearchRef.current && !areaSearchRef.current.contains(event.target as Node)) {
+        setShowAreaSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (areaSearchQuery.trim()) {
+      const filtered = lahoreLocations.filter(location =>
+        location.name.toLowerCase().includes(areaSearchQuery.toLowerCase())
+      )
+      setFilteredAreas(filtered.slice(0, 10))
+      setShowAreaSuggestions(true)
+    } else {
+      setFilteredAreas([])
+      setShowAreaSuggestions(false)
+    }
+  }, [areaSearchQuery])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData(prev => ({
@@ -138,14 +165,11 @@ export default function CustomerRegisterPage() {
                     id="city"
                     name="city"
                     required
-                    className="input"
+                    className="input bg-gray-100 cursor-not-allowed"
                     value={formData.city}
-                    onChange={handleChange}
+                    disabled
                   >
-                    <option value="">Select City</option>
-                    {pakistanCities.map(city => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
+                    <option value="Lahore">Lahore</option>
                   </select>
                 </div>
 
@@ -153,19 +177,39 @@ export default function CustomerRegisterPage() {
                   <label htmlFor="area" className="label">
                     Area/Town <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="area"
-                    name="area"
-                    required
-                    className="input"
-                    value={formData.area}
-                    onChange={handleChange}
-                  >
-                    <option value="">Select Area/Town</option>
-                    {lahoreLocations.map(location => (
-                      <option key={location.name} value={location.name}>{location.name}</option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={areaSearchRef}>
+                    <input
+                      id="area"
+                      type="text"
+                      className="input"
+                      placeholder="Type to search area/town..."
+                      value={areaSearchQuery || formData.area}
+                      onChange={(e) => {
+                        setAreaSearchQuery(e.target.value)
+                        setFormData(prev => ({ ...prev, area: '' }))
+                      }}
+                      onFocus={() => areaSearchQuery.trim() && setShowAreaSuggestions(true)}
+                      required
+                    />
+                    {showAreaSuggestions && filteredAreas.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        {filteredAreas.map((location) => (
+                          <button
+                            key={location.name}
+                            type="button"
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, area: location.name }))
+                              setAreaSearchQuery('')
+                              setShowAreaSuggestions(false)
+                            }}
+                            className="w-full text-left px-4 py-3 hover:bg-primary-50 transition-colors border-b border-gray-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-gray-900">{location.name}</div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
