@@ -229,9 +229,15 @@ export default function PostJobPage() {
   }
 
   const nextStep = () => {
-    if (currentStep === 0 && selectedServices.length === 0) {
-      toast.error('Please select a service')
-      return
+    if (currentStep === 0) {
+      if (selectedServices.length === 0) {
+        toast.error('Please select a service')
+        return
+      }
+      if (subServices.length > 0 && selectedSubServices.length === 0) {
+        toast.error('Please select a sub-service')
+        return
+      }
     }
     if (currentStep === 1 && (!formData.city || !formData.area)) {
       toast.error('Please enter city and area')
@@ -651,7 +657,7 @@ export default function PostJobPage() {
 
               <button
                 onClick={nextStep}
-                disabled={loading}
+                disabled={loading || (currentStep === 0 && subServices.length > 0 && selectedSubServices.length === 0)}
                 className="btn btn-primary btn-md"
               >
                 {currentStep === STEPS.length - 1 ? (loading ? 'Submitting...' : 'Submit Job') : (
