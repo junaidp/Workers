@@ -27,7 +27,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <img src={logo} alt="WorkersHub" className="h-18 w-auto" />
+              <img src={logo} alt="WorkersHub" className="h-22 w-auto" />
             </Link>
           </div>
 
