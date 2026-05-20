@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react'
+import logo from '../../assets/logo.jpeg'
 
 export default function Footer() {
   return (
@@ -7,7 +8,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4">WorkersHub</h3>
+            <img src={logo} alt="WorkersHub" className="h-10 w-auto mb-4" />
             <p className="text-gray-400 mb-4">
               Connecting homeowners with verified tradespeople across Pakistan. Free for customers, affordable for professionals.
             </p>

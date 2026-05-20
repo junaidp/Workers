@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X, User, LogOut, LayoutDashboard } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
+import logo from '../../assets/logo.jpeg'
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -25,8 +26,8 @@ export default function Header() {
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-primary-600">
-              WorkersHub
+            <Link to="/" className="flex items-center">
+              <img src={logo} alt="WorkersHub" className="h-10 w-auto" />
             </Link>
           </div>
 
