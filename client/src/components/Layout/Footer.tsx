@@ -8,7 +8,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div>
-            <img src={logo} alt="WorkersHub" className="h-10 w-auto mb-4" />
+            <img src={logo} alt="WorkersHub" className="h-14 w-auto mb-4" />
             <p className="text-gray-400 mb-4">
               Connecting homeowners with verified tradespeople across Pakistan. Free for customers, affordable for professionals.
             </p>
