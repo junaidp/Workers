@@ -82,21 +82,7 @@ export default function Footer() {
 
           <div>
             <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-            <ul className="space-y-2">
-              <li className="flex items-start gap-2 text-gray-400">
-                <MapPin className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>Karachi, Pakistan</span>
-              </li>
-              <li className="flex items-center gap-2 text-gray-400">
-                <Phone className="w-5 h-5 flex-shrink-0" />
-                <span>+92 300 1234567</span>
-              </li>
-              <li className="flex items-center gap-2 text-gray-400">
-                <Mail className="w-5 h-5 flex-shrink-0" />
-                <span>info@workershub.pk</span>
-              </li>
-            </ul>
-            <Link to="/contact" className="btn btn-primary btn-sm mt-4">
+            <Link to="/contact" className="btn btn-primary btn-sm">
               Contact Form
             </Link>
           </div>
