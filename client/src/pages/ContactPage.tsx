@@ -136,7 +136,7 @@ export default function ContactPage() {
               </div>
 
               <div className="space-y-6">
-                <div className="card">
+                <div className="card" hidden={true}>
                   <h3 className="font-semibold text-lg mb-4">Contact Information</h3>
                   
                   <div className="space-y-4">
