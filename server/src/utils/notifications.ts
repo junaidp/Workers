@@ -5,8 +5,8 @@ const transporter = nodemailer.createTransport({
   port: 587,
   secure: false,
   auth: {
-    user: 'gofatoorahhyphen11@gmail.com',
-    pass: 'hpubgqhmjsxvtkas'
+    user: 'gofatoorahhyphen111@gmail.com',
+    pass: 'ldpgkzaqsmeakaxv'
   },
   tls: {
     rejectUnauthorized: false
@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  const fromAddress = 'gofatoorahhyphen11@gmail.com';
+  const fromAddress = 'gofatoorahhyphen111@gmail.com';
 
   console.log('📧 Email Configuration:');
   console.log(`   - Provider: Gmail SMTP`);
