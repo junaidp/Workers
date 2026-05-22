@@ -4,8 +4,8 @@ import { Readable } from 'stream';
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dx5xvlojc',
-  api_key: process.env.CLOUDINARY_API_KEY || '277458255413249',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'xIi8gXM3vDFjZGbhLhNIhhJNCs'
+  api_key: process.env.CLOUDINARY_API_KEY || '981511359158459',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'TdVmH5UKkuL9d8YrtaWZ2ocCzxE'
 });
 
 console.log('Cloudinary configured with cloud_name:', process.env.CLOUDINARY_CLOUD_NAME || 'dx5xvlojc');
