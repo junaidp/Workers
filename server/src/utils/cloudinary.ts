@@ -18,7 +18,7 @@ export const uploadToCloudinary = async (file: Express.Multer.File): Promise<str
     const result = await cloudinary.uploader.upload(
       `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
       {
-        folder: 'job-images',
+        folder: 'worknfix',
         resource_type: 'image'
       }
     );
