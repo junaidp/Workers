@@ -53,7 +53,7 @@ router.post('/', cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddlewa
       email
     } = req.body;
 
-    let customer;
+    let customer: any;
     
     if (req.headers.authorization) {
       const token = req.headers.authorization.split(' ')[1];
