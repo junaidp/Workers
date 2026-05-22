@@ -11,24 +11,29 @@ cloudinary.config({
 console.log('Cloudinary configured with cloud_name:', process.env.CLOUDINARY_CLOUD_NAME || 'dx5xvlojc');
 
 export const uploadToCloudinary = async (file: Express.Multer.File): Promise<string> => {
-  try {
+  return new Promise((resolve, reject) => {
     console.log('Starting Cloudinary upload for file:', file.originalname, 'mimetype:', file.mimetype);
     
-    // Use the simpler upload method with buffer and correct mimetype
-    const result = await cloudinary.uploader.upload(
-      `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+    const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: 'worknfix',
         resource_type: 'image'
+      },
+      (error, result) => {
+        if (error) {
+          console.error('Cloudinary upload error for file:', file.originalname, error);
+          reject(error);
+        } else {
+          console.log('Cloudinary upload successful:', result?.secure_url);
+          resolve(result!.secure_url);
+        }
       }
     );
-    
-    console.log('Cloudinary upload successful:', result.secure_url);
-    return result.secure_url;
-  } catch (error) {
-    console.error('Cloudinary upload error for file:', file.originalname, error);
-    throw error;
-  }
+
+    // Convert buffer to stream and pipe to Cloudinary
+    const bufferStream = Readable.from(file.buffer);
+    bufferStream.pipe(uploadStream);
+  });
 };
 
 export const deleteFromCloudinary = async (publicId: string): Promise<void> => {
