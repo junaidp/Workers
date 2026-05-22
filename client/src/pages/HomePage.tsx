@@ -151,7 +151,12 @@ export default function HomePage() {
                 </div>
                 <Link
                   to={`/post-job${searchQuery ? `?service=${searchQuery}` : ''}`}
-                  className="btn btn-accent btn-lg whitespace-nowrap"
+                  className={`btn btn-accent btn-lg whitespace-nowrap ${!searchQuery.trim() ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                  onClick={(e) => {
+                    if (!searchQuery.trim()) {
+                      e.preventDefault()
+                    }
+                  }}
                 >
                   Post Your Job
                 </Link>

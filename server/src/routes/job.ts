@@ -36,7 +36,7 @@ function normalizeServiceIds(raw: unknown): string[] {
   return [];
 }
 
-router.post('/', authenticate, authorize('CUSTOMER'), cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
+router.post('/', cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const {
       serviceIds,
@@ -47,16 +47,71 @@ router.post('/', authenticate, authorize('CUSTOMER'), cloudinaryUpload.array('im
       preferredTime,
       isFlexible,
       isDirectRequest,
-      targetTradesmanId
+      targetTradesmanId,
+      fullName,
+      mobile,
+      email
     } = req.body;
 
-    const customer = await prisma.customer.findUnique({
-      where: { userId: req.user!.userId },
-      include: { user: true }
-    });
+    let customer;
+    
+    if (req.headers.authorization) {
+      const token = req.headers.authorization.split(' ')[1];
+      try {
+        const jwt = await import('jsonwebtoken');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string };
+        customer = await prisma.customer.findUnique({
+          where: { userId: decoded.userId },
+          include: { user: true }
+        });
+      } catch (error) {
+        console.log('Invalid token, proceeding as guest');
+      }
+    }
 
     if (!customer) {
-      return res.status(404).json({ message: 'Customer profile not found' });
+      if (!fullName || !mobile) {
+        return res.status(400).json({ message: 'Full name and mobile number are required for guest posting' });
+      }
+
+      let user = await prisma.user.findFirst({
+        where: { mobile },
+        include: { customer: true }
+      });
+
+      if (user && user.customer) {
+        customer = user.customer;
+      } else if (user && !user.customer) {
+        customer = await prisma.customer.create({
+          data: {
+            userId: user.id,
+            fullName,
+            city,
+            area
+          },
+          include: { user: true }
+        });
+      } else {
+        user = await prisma.user.create({
+          data: {
+            mobile,
+            email: email || null,
+            whatsapp: mobile,
+            role: 'CUSTOMER',
+            countryCode: '+92',
+            isWhatsappVerified: true,
+            customer: {
+              create: {
+                fullName,
+                city,
+                area
+              }
+            }
+          },
+          include: { customer: true }
+        });
+        customer = user.customer!;
+      }
     }
 
     const serviceIdsList = normalizeServiceIds(serviceIds);

@@ -182,12 +182,6 @@ export default function PostJobPage() {
   }
 
   const handleSubmit = async () => {
-    if (!user) {
-      toast.error('Please login or register to post a job')
-      navigate('/register/customer')
-      return
-    }
-
     if (selectedServices.length === 0) {
       toast.error('Please select at least one service')
       return
@@ -220,7 +214,11 @@ export default function PostJobPage() {
       })
 
       toast.success('Job posted successfully!')
-      navigate('/dashboard/customer')
+      if (user) {
+        navigate('/dashboard/customer')
+      } else {
+        navigate('/')
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to post job')
     } finally {
@@ -242,6 +240,12 @@ export default function PostJobPage() {
     if (currentStep === 1 && (!formData.city || !formData.area)) {
       toast.error('Please enter city and area')
       return
+    }
+    if (currentStep === 2) {
+      if (!formData.isFlexible && !formData.preferredTime) {
+        toast.error('Please select a preferred time slot')
+        return
+      }
     }
     if (currentStep === 3 && (!formData.fullName || !formData.mobile)) {
       toast.error('Please enter your name and phone number')

@@ -15,6 +15,7 @@ export default function CustomerRegisterPage() {
     whatsapp: '',
     city: 'Lahore',
     area: '',
+    password: '',
   })
   const [areaSearchQuery, setAreaSearchQuery] = useState('')
   const [filteredAreas, setFilteredAreas] = useState<any[]>([])
@@ -55,12 +56,23 @@ export default function CustomerRegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+    
     setLoading(true)
 
     try {
-      await api.post('/auth/register/customer', formData)
-      toast.success('Registration successful! Please check your email/WhatsApp for verification.')
-      navigate('/verify')
+      const response = await api.post('/auth/register/customer', formData)
+      toast.success('Registration successful!')
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token)
+      }
+      
+      navigate('/login')
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Registration failed')
     } finally {
@@ -154,6 +166,24 @@ export default function CustomerRegisterPage() {
                     maxLength={10}
                   />
                 </div>
+              </div>
+
+              <div>
+                <label htmlFor="password" className="label">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="input"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  minLength={6}
+                />
+                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">

@@ -87,10 +87,14 @@ router.post('/register/admin', async (req, res) => {
 
 router.post('/register/customer', async (req, res) => {
   try {
-    const { fullName, email, mobile, whatsapp, city, area } = req.body;
+    const { fullName, email, mobile, whatsapp, city, area, password } = req.body;
 
-    if (!fullName || !mobile || !city || !area) {
+    if (!fullName || !mobile || !city || !area || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
     if (!validatePakistanMobile(mobile)) {
@@ -114,13 +118,18 @@ router.post('/register/customer', async (req, res) => {
       return res.status(400).json({ message: 'User already exists with this mobile or email' });
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const user = await prisma.user.create({
       data: {
         mobile,
         email: email || null,
+        password: hashedPassword,
         whatsapp: whatsapp || mobile,
         role: 'CUSTOMER',
         countryCode: '+92',
+        isEmailVerified: true,
+        isWhatsappVerified: true,
         customer: {
           create: {
             fullName,
@@ -134,28 +143,22 @@ router.post('/register/customer', async (req, res) => {
       }
     });
 
-    const verificationToken = uuidv4();
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    await prisma.verificationToken.create({
-      data: {
-        userId: user.id,
-        token: verificationToken,
-        type: email ? 'email' : 'whatsapp',
-        expiresAt
-      }
-    });
-
-    if (email) {
-      await sendVerificationEmail(email, verificationToken, 'customer');
-    }
-
-    const whatsappVerificationLink = `${process.env.FRONTEND_URL}/verify?token=${verificationToken}&type=whatsapp`;
-    await sendWhatsApp(user.whatsapp!, `Welcome! Verify your account: ${whatsappVerificationLink}`);
+    const token = jwt.sign(
+      { userId: user.id, role: user.role },
+      process.env.JWT_SECRET!,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
+    );
 
     res.status(201).json({
-      message: 'Registration successful. Please verify your account.',
-      userId: user.id
+      message: 'Registration successful',
+      token,
+      user: {
+        id: user.id,
+        role: user.role,
+        mobile: user.mobile,
+        email: user.email,
+        customer: user.customer
+      }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -276,25 +279,18 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    // For ADMIN and TRADESMAN roles, require password authentication
-    if (user.role === 'ADMIN' || user.role === 'TRADESMAN') {
-      if (!password) {
-        return res.status(400).json({ message: 'Password required' });
-      }
+    // All roles now require password authentication
+    if (!password) {
+      return res.status(400).json({ message: 'Password required' });
+    }
 
-      if (!user.password) {
-        return res.status(401).json({ message: 'Password not set for this account' });
-      }
+    if (!user.password) {
+      return res.status(401).json({ message: 'Password not set for this account' });
+    }
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Invalid password' });
-      }
-    } else {
-      // For CUSTOMER role, check verification status
-      if (!user.isEmailVerified && !user.isWhatsappVerified) {
-        return res.status(401).json({ message: 'Please verify your account first' });
-      }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid password' });
     }
 
     const token = jwt.sign(
