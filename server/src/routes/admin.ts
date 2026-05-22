@@ -337,6 +337,65 @@ router.put('/user/:id/status', authenticate, authorize('ADMIN'), async (req: Aut
   }
 });
 
+router.delete('/tradesman/:id', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const idString = Array.isArray(id) ? id[0] : id;
+
+    const tradesman = await prisma.tradesman.findUnique({
+      where: { id: idString },
+      include: { user: true }
+    });
+
+    if (!tradesman) {
+      return res.status(404).json({ message: 'Tradesman not found' });
+    }
+
+    // Delete related records first
+    await prisma.$transaction([
+      prisma.tradesmanService.deleteMany({ where: { tradesmanId: idString } }),
+      prisma.portfolioImage.deleteMany({ where: { tradesmanId: idString } }),
+      prisma.certification.deleteMany({ where: { tradesmanId: idString } }),
+      prisma.review.deleteMany({ where: { tradesmanId: idString } }),
+      prisma.jobResponse.deleteMany({ where: { tradesmanId: idString } }),
+      prisma.creditTransaction.deleteMany({ where: { tradesmanId: idString } }),
+      prisma.fakeLeadReport.deleteMany({ where: { tradesmanId: idString } }),
+      prisma.tradesman.delete({ where: { id: idString } }),
+      prisma.user.delete({ where: { id: tradesman.userId } })
+    ]);
+
+    res.json({ message: 'Tradesman deleted successfully' });
+  } catch (error) {
+    console.error('Delete tradesman error:', error);
+    res.status(500).json({ message: 'Failed to delete tradesman' });
+  }
+});
+
+router.get('/customers/all', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
+  try {
+    const customers = await prisma.customer.findMany({
+      include: {
+        user: true,
+        jobs: {
+          include: {
+            services: {
+              include: {
+                service: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(customers);
+  } catch (error) {
+    console.error('Get all customers error:', error);
+    res.status(500).json({ message: 'Failed to get customers' });
+  }
+});
+
 router.get('/fake-lead-reports', authenticate, authorize('ADMIN'), async (req: AuthRequest, res) => {
   try {
     const reports = await prisma.fakeLeadReport.findMany({

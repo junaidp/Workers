@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, Briefcase, CheckCircle, Clock, Award, Eye, X, Check, Edit } from 'lucide-react'
+import { Users, Briefcase, CheckCircle, Clock, Award, Eye, X, Check, Edit, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import Layout from '../../components/Layout/Layout'
 import api from '../../lib/api'
@@ -9,11 +9,12 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null)
   const [pendingTradesmen, setPendingTradesmen] = useState<any[]>([])
   const [allTradesmen, setAllTradesmen] = useState<any[]>([])
+  const [allCustomers, setAllCustomers] = useState<any[]>([])
   const [selectedTradesman, setSelectedTradesman] = useState<any>(null)
   const [editingTradesman, setEditingTradesman] = useState<any>(null)
   const [editFormData, setEditFormData] = useState<any>({})
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'pending' | 'users' | 'reports'>('pending')
+  const [activeTab, setActiveTab] = useState<'pending' | 'users' | 'customers' | 'reports'>('pending')
 
   useEffect(() => {
     fetchDashboardData()
@@ -21,14 +22,16 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, tradesmenRes, allTradesmenRes] = await Promise.all([
+      const [statsRes, tradesmenRes, allTradesmenRes, customersRes] = await Promise.all([
         api.get('/admin/dashboard/stats'),
         api.get('/admin/tradesmen/pending'),
-        api.get('/admin/tradesmen/all')
+        api.get('/admin/tradesmen/all'),
+        api.get('/admin/customers/all')
       ])
       setStats(statsRes.data)
       setPendingTradesmen(tradesmenRes.data)
       setAllTradesmen(allTradesmenRes.data)
+      setAllCustomers(customersRes.data)
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -82,6 +85,20 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleDeleteTradesman = async (id: string, businessName: string) => {
+    if (!window.confirm(`Are you sure you want to delete ${businessName}? This action cannot be undone.`)) {
+      return
+    }
+    
+    try {
+      await api.delete(`/admin/tradesman/${id}`)
+      toast.success('Tradesman deleted successfully')
+      fetchDashboardData()
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete tradesman')
+    }
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-gray-50 py-8">
@@ -99,7 +116,7 @@ export default function AdminDashboard() {
             <>
               <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6 mb-8">
                 <button 
-                  onClick={() => setActiveTab('users')}
+                  onClick={() => setActiveTab('customers')}
                   className="card hover:shadow-lg transition-shadow cursor-pointer text-left"
                 >
                   <div className="text-center">
@@ -186,7 +203,17 @@ export default function AdminDashboard() {
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                       }`}
                     >
-                      User Management
+                      Tradespeople ({allTradesmen.length})
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('customers')}
+                      className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                        activeTab === 'customers'
+                          ? 'border-primary-600 text-primary-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      Customers ({allCustomers.length})
                     </button>
                     <button
                       onClick={() => setActiveTab('reports')}
@@ -294,6 +321,48 @@ export default function AdminDashboard() {
                                   <Edit className="w-4 h-4 mr-1" />
                                   Edit
                                 </button>
+                                <button
+                                  onClick={() => handleDeleteTradesman(tradesman.id, tradesman.businessName)}
+                                  className="btn btn-secondary btn-sm text-red-600 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-1" />
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'customers' && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4">All Customers</h3>
+                    {allCustomers.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-600">No customers found</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {allCustomers.map(customer => (
+                          <div key={customer.id} className="border border-gray-200 rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-lg">{customer.fullName}</h3>
+                                <p className="text-sm text-gray-500">
+                                  Mobile: {customer.user.mobile} | Email: {customer.user.email || 'N/A'}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Location: {customer.area}, {customer.city}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Total Jobs: {customer.jobs?.length || 0}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  Joined: {formatDateTime(customer.createdAt)}
+                                </p>
                               </div>
                             </div>
                           </div>
