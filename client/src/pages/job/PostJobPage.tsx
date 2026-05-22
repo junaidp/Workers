@@ -242,8 +242,8 @@ export default function PostJobPage() {
       return
     }
     if (currentStep === 2) {
-      if (!formData.isFlexible && !formData.preferredTime) {
-        toast.error('Please select a preferred time slot')
+      if (!formData.isFlexible && (!formData.preferredDate || !formData.preferredTime)) {
+        toast.error('Please select both preferred date and time, or check "I\'m flexible"')
         return
       }
     }
@@ -661,7 +661,7 @@ export default function PostJobPage() {
 
               <button
                 onClick={nextStep}
-                disabled={loading || (currentStep === 0 && (selectedServices.length === 0 || (subServices.length > 0 && selectedSubServices.length === 0))) || (currentStep === 2 && !formData.isFlexible && !formData.preferredTime)}
+                disabled={loading || (currentStep === 0 && (selectedServices.length === 0 || (subServices.length > 0 && selectedSubServices.length === 0))) || (currentStep === 2 && !formData.isFlexible && (!formData.preferredDate || !formData.preferredTime))}
                 className="btn btn-primary btn-md"
               >
                 {currentStep === STEPS.length - 1 ? (loading ? 'Submitting...' : 'Submit Job') : (
