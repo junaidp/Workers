@@ -661,7 +661,7 @@ export default function PostJobPage() {
 
               <button
                 onClick={nextStep}
-                disabled={loading || (currentStep === 0 && (selectedServices.length === 0 || (subServices.length > 0 && selectedSubServices.length === 0)))}
+                disabled={loading || (currentStep === 0 && (selectedServices.length === 0 || (subServices.length > 0 && selectedSubServices.length === 0))) || (currentStep === 2 && !formData.isFlexible && !formData.preferredTime)}
                 className="btn btn-primary btn-md"
               >
                 {currentStep === STEPS.length - 1 ? (loading ? 'Submitting...' : 'Submit Job') : (
