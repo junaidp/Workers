@@ -2,7 +2,7 @@ import express from 'express';
 import * as bcrypt from 'bcryptjs';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
-import { upload } from '../middleware/upload.js';
+import { upload, uploadToCloudinaryMiddleware } from '../middleware/upload.js';
 import { generateTradesmanId } from '../utils/idGenerator.js';
 import { validateCNIC, validatePakistanMobile } from '../utils/validation.js';
 import { sendEmail, sendWhatsApp } from '../utils/notifications.js';
@@ -17,7 +17,7 @@ router.post('/register', upload.fields([
   { name: 'tradeLicense', maxCount: 1 },
   { name: 'portfolioImages', maxCount: 10 },
   { name: 'certifications', maxCount: 5 }
-]), async (req, res) => {
+]), uploadToCloudinaryMiddleware, async (req, res) => {
   try {
     console.log('🔄 Tradesman registration started');
     
@@ -101,6 +101,8 @@ router.post('/register', upload.fields([
       .join(', ');
 
     console.log('🏢 Creating tradesman profile...');
+    const cloudinaryFiles = (req as any).cloudinaryFiles;
+    
     const tradesman = await prisma.tradesman.create({
       data: {
         userId: user.id,
@@ -114,10 +116,10 @@ router.post('/register', upload.fields([
         country: country || 'Pakistan',
         description: description || '',
         cnicNumber: cnicNumber.replace(/-/g, ''),
-        cnicImage: `/uploads/${files.cnicImage[0].filename}`,
-        proofOfAddress: files.proofOfAddress ? `/uploads/${files.proofOfAddress[0].filename}` : undefined,
-        profilePicture: `/uploads/${files.profilePicture[0].filename}`,
-        tradeLicense: files.tradeLicense ? `/uploads/${files.tradeLicense[0].filename}` : undefined,
+        cnicImage: cloudinaryFiles.cnicImage[0].cloudinaryUrl,
+        proofOfAddress: cloudinaryFiles.proofOfAddress ? cloudinaryFiles.proofOfAddress[0].cloudinaryUrl : undefined,
+        profilePicture: cloudinaryFiles.profilePicture[0].cloudinaryUrl,
+        tradeLicense: cloudinaryFiles.tradeLicense ? cloudinaryFiles.tradeLicense[0].cloudinaryUrl : undefined,
         landline: landline || null,
         website: website || null,
         verificationStatus: 'PENDING',
@@ -132,22 +134,22 @@ router.post('/register', upload.fields([
 
     console.log('✅ Tradesman created:', tradesman.id);
 
-    if (files.portfolioImages) {
+    if (cloudinaryFiles.portfolioImages) {
       await prisma.portfolioImage.createMany({
-        data: files.portfolioImages.map(file => ({
+        data: cloudinaryFiles.portfolioImages.map((file: any) => ({
           tradesmanId: tradesman.id,
-          imageUrl: `/uploads/${file.filename}`
+          imageUrl: file.cloudinaryUrl
         }))
       });
     }
 
-    if (files.certifications && certificationTitles) {
+    if (cloudinaryFiles.certifications && certificationTitles) {
       const titles = Array.isArray(certificationTitles) ? certificationTitles : JSON.parse(certificationTitles || '[]');
       await prisma.certification.createMany({
-        data: files.certifications.map((file, index) => ({
+        data: cloudinaryFiles.certifications.map((file: any, index: number) => ({
           tradesmanId: tradesman.id,
           title: titles[index] || 'Certification',
-          imageUrl: `/uploads/${file.filename}`
+          imageUrl: file.cloudinaryUrl
         }))
       });
     }
@@ -490,10 +492,10 @@ router.get('/dashboard/jobs', authenticate, authorize('TRADESMAN'), async (req: 
 router.put('/profile', authenticate, authorize('TRADESMAN'), upload.fields([
   { name: 'portfolioImages', maxCount: 10 },
   { name: 'certifications', maxCount: 5 }
-]), async (req: AuthRequest, res) => {
+]), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const { description, landline, certificationTitles } = req.body;
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    const cloudinaryFiles = (req as any).cloudinaryFiles;
 
     const tradesman = await prisma.tradesman.findUnique({
       where: { userId: req.user!.userId }
@@ -511,22 +513,22 @@ router.put('/profile', authenticate, authorize('TRADESMAN'), upload.fields([
       }
     });
 
-    if (files.portfolioImages) {
+    if (cloudinaryFiles && cloudinaryFiles.portfolioImages) {
       await prisma.portfolioImage.createMany({
-        data: files.portfolioImages.map(file => ({
+        data: cloudinaryFiles.portfolioImages.map((file: any) => ({
           tradesmanId: tradesman.id,
-          imageUrl: `/uploads/${file.filename}`
+          imageUrl: file.cloudinaryUrl
         }))
       });
     }
 
-    if (files.certifications && certificationTitles) {
+    if (cloudinaryFiles && cloudinaryFiles.certifications && certificationTitles) {
       const titles = Array.isArray(certificationTitles) ? certificationTitles : JSON.parse(certificationTitles || '[]');
       await prisma.certification.createMany({
-        data: files.certifications.map((file, index) => ({
+        data: cloudinaryFiles.certifications.map((file: any, index: number) => ({
           tradesmanId: tradesman.id,
           title: titles[index] || 'Certification',
-          imageUrl: `/uploads/${file.filename}`
+          imageUrl: file.cloudinaryUrl
         }))
       });
     }

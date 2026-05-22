@@ -1,39 +1,9 @@
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
+import { Request, Response, NextFunction } from 'express';
+import { uploadToCloudinary } from '../utils/cloudinary.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const uploadsDir = process.env.UPLOAD_DIR || path.join(__dirname, '..', '..', 'uploads');
-
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // For job uploads, store directly in uploads directory
-    if (req.originalUrl && req.originalUrl.includes('/jobs')) {
-      cb(null, uploadsDir);
-    } else {
-      const folder = req.body.folder || 'general';
-      const dir = path.join(uploadsDir, folder);
-      
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-      
-      cb(null, dir);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-    cb(null, uniqueName);
-  },
-});
+// Use memory storage to buffer files before uploading to Cloudinary
+const storage = multer.memoryStorage();
 
 const fileFilter = (req: any, file: any, cb: any) => {
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
@@ -52,3 +22,54 @@ export const upload = multer({
     fileSize: 10 * 1024 * 1024,
   },
 });
+
+// Middleware to upload files to Cloudinary after multer processing
+export const uploadToCloudinaryMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Handle single file upload
+    if (req.file) {
+      console.log('Processing single file for Cloudinary upload:', req.file.originalname);
+      const url = await uploadToCloudinary(req.file);
+      (req as any).cloudinaryUrl = url;
+      console.log('Single file uploaded successfully:', url);
+    }
+
+    // Handle multiple files upload
+    if (req.files) {
+      if (Array.isArray(req.files)) {
+        console.log('Processing', req.files.length, 'files for Cloudinary upload');
+        const uploadPromises = req.files.map(async (file) => {
+          const url = await uploadToCloudinary(file);
+          return { ...file, cloudinaryUrl: url };
+        });
+        const uploadedFiles = await Promise.all(uploadPromises);
+        (req as any).cloudinaryFiles = uploadedFiles;
+        console.log('All files uploaded successfully');
+      } else {
+        // Handle fields-based upload (e.g., upload.fields())
+        const fieldNames = Object.keys(req.files);
+        const cloudinaryFiles: any = {};
+        
+        for (const fieldName of fieldNames) {
+          const files = (req.files as any)[fieldName];
+          console.log(`Processing ${files.length} files for field: ${fieldName}`);
+          
+          const uploadPromises = files.map(async (file: Express.Multer.File) => {
+            const url = await uploadToCloudinary(file);
+            return { ...file, cloudinaryUrl: url };
+          });
+          
+          cloudinaryFiles[fieldName] = await Promise.all(uploadPromises);
+        }
+        
+        (req as any).cloudinaryFiles = cloudinaryFiles;
+        console.log('All field files uploaded successfully');
+      }
+    }
+
+    next();
+  } catch (error) {
+    console.error('Cloudinary upload middleware error:', error);
+    res.status(500).json({ message: 'Failed to upload files to cloud storage' });
+  }
+};

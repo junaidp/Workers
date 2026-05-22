@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
-import { upload } from '../middleware/upload.js';
+import { upload, uploadToCloudinaryMiddleware } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -108,10 +108,10 @@ router.get('/:serviceId/children', async (req, res) => {
   }
 });
 
-router.post('/category', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+router.post('/category', authenticate, authorize('ADMIN'), upload.single('image'), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const { name, slug, description, order } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const image = (req as any).cloudinaryUrl || null;
 
     const category = await prisma.serviceCategory.create({
       data: {
@@ -130,10 +130,10 @@ router.post('/category', authenticate, authorize('ADMIN'), upload.single('image'
   }
 });
 
-router.post('/service', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+router.post('/service', authenticate, authorize('ADMIN'), upload.single('image'), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const { categoryId, name, slug, description, parentId, level, order } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    const image = (req as any).cloudinaryUrl || null;
 
     const service = await prisma.service.create({
       data: {
@@ -155,11 +155,11 @@ router.post('/service', authenticate, authorize('ADMIN'), upload.single('image')
   }
 });
 
-router.put('/category/:id', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+router.put('/category/:id', authenticate, authorize('ADMIN'), upload.single('image'), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { name, description, isActive, order } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const image = (req as any).cloudinaryUrl || undefined;
     const idString = Array.isArray(id) ? id[0] : id;
 
     const updateData: any = {};
@@ -181,11 +181,11 @@ router.put('/category/:id', authenticate, authorize('ADMIN'), upload.single('ima
   }
 });
 
-router.put('/service/:id', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+router.put('/service/:id', authenticate, authorize('ADMIN'), upload.single('image'), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { name, description, isActive, order } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const image = (req as any).cloudinaryUrl || undefined;
     const idString = Array.isArray(id) ? id[0] : id;
 
     const updateData: any = {};

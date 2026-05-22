@@ -1,7 +1,7 @@
 import express from 'express';
 import { prisma } from '../index.js';
 import { authenticate, authorize, AuthRequest } from '../middleware/auth.js';
-import { upload } from '../middleware/upload.js';
+import { upload, uploadToCloudinaryMiddleware } from '../middleware/upload.js';
 import { generateTradesmanId } from '../utils/idGenerator.js';
 import { sendEmail, sendWhatsApp } from '../utils/notifications.js';
 
@@ -508,23 +508,20 @@ router.put('/contact-message/:id/resolve', authenticate, authorize('ADMIN'), asy
   }
 });
 
-router.put('/service/:id/image', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+router.put('/service/:id/image', authenticate, authorize('ADMIN'), upload.single('image'), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const idString = Array.isArray(id) ? id[0] : id;
-    const file = req.file;
+    const cloudinaryUrl = (req as any).cloudinaryUrl;
 
-    if (!file) {
+    if (!cloudinaryUrl) {
       return res.status(400).json({ message: 'No image file provided' });
     }
-
-    const folder = req.body.folder || 'general';
-    const imagePath = `/uploads/${folder}/${file.filename}`;
 
     const service = await prisma.service.update({
       where: { id: idString },
       data: {
-        image: imagePath
+        image: cloudinaryUrl
       }
     });
 
@@ -535,23 +532,20 @@ router.put('/service/:id/image', authenticate, authorize('ADMIN'), upload.single
   }
 });
 
-router.put('/category/:id/image', authenticate, authorize('ADMIN'), upload.single('image'), async (req: AuthRequest, res) => {
+router.put('/category/:id/image', authenticate, authorize('ADMIN'), upload.single('image'), uploadToCloudinaryMiddleware, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const idString = Array.isArray(id) ? id[0] : id;
-    const file = req.file;
+    const cloudinaryUrl = (req as any).cloudinaryUrl;
 
-    if (!file) {
+    if (!cloudinaryUrl) {
       return res.status(400).json({ message: 'No image file provided' });
     }
-
-    const folder = req.body.folder || 'general';
-    const imagePath = `/uploads/${folder}/${file.filename}`;
 
     const category = await prisma.serviceCategory.update({
       where: { id: idString },
       data: {
-        image: imagePath
+        image: cloudinaryUrl
       }
     });
 
