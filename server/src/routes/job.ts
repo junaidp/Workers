@@ -80,7 +80,10 @@ router.post('/', cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddlewa
       });
 
       if (user && user.customer) {
-        customer = user.customer;
+        customer = await prisma.customer.findUnique({
+          where: { id: user.customer.id },
+          include: { user: true }
+        });
       } else if (user && !user.customer) {
         customer = await prisma.customer.create({
           data: {
