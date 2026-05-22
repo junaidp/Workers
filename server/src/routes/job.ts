@@ -111,10 +111,18 @@ router.post('/', cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddlewa
               }
             }
           },
-          include: { customer: true }
+          include: { 
+            customer: {
+              include: { user: true }
+            }
+          }
         });
         customer = user.customer!;
       }
+    }
+
+    if (!customer) {
+      return res.status(500).json({ message: 'Failed to create or retrieve customer' });
     }
 
     const serviceIdsList = normalizeServiceIds(serviceIds);
@@ -148,7 +156,7 @@ router.post('/', cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddlewa
     const job = await prisma.job.create({
       data: {
         jobId,
-        customerId: customer.id,
+        customerId: customer!.id,
         serviceType: serviceIdsList.join(','),
         description,
         location: `${area}, ${city}`,
@@ -176,7 +184,7 @@ router.post('/', cloudinaryUpload.array('images', 5), uploadToCloudinaryMiddlewa
     });
 
     await sendWhatsApp(
-      customer.user.whatsapp!,
+      customer!.user!.whatsapp!,
       `Your job request (${jobId}) has been submitted successfully. You will be contacted by up to 3 tradesmen.`
     );
 
