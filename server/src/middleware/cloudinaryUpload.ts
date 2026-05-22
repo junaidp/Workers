@@ -32,28 +32,40 @@ export const uploadToCloudinaryMiddleware = async (req: Request, res: Response, 
 
     console.log('Processing', req.files.length, 'files for Cloudinary upload');
 
-    // Upload each file to Cloudinary
+    // Upload each file to Cloudinary with individual error handling
     const uploadPromises = (req.files as Express.Multer.File[]).map(async (file) => {
-      console.log('Uploading file:', file.originalname, 'Size:', file.size);
-      const url = await uploadToCloudinary(file);
-      return {
-        originalname: file.originalname,
-        size: file.size,
-        mimetype: file.mimetype,
-        url: url
-      };
+      try {
+        console.log('Uploading file:', file.originalname, 'Size:', file.size);
+        const url = await uploadToCloudinary(file);
+        return {
+          originalname: file.originalname,
+          size: file.size,
+          mimetype: file.mimetype,
+          url: url
+        };
+      } catch (error) {
+        console.error('Failed to upload file:', file.originalname, error);
+        return null;
+      }
     });
 
-    const uploadedFiles = await Promise.all(uploadPromises);
+    const uploadResults = await Promise.all(uploadPromises);
+    const uploadedFiles = uploadResults.filter(file => file !== null);
     
-    console.log('All files uploaded successfully:', uploadedFiles.map(f => f.url));
-    
-    // Replace req.files with Cloudinary URLs
-    req.files = uploadedFiles as any;
+    if (uploadedFiles.length > 0) {
+      console.log('Successfully uploaded', uploadedFiles.length, 'files:', uploadedFiles.map(f => f!.url));
+      req.files = uploadedFiles as any;
+    } else {
+      console.warn('No files were successfully uploaded, continuing without images');
+      req.files = [];
+    }
     
     next();
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
-    res.status(500).json({ message: 'Failed to upload images to cloud storage' });
+    console.error('Cloudinary upload middleware error:', error);
+    // Continue without images instead of failing the request
+    console.warn('Continuing request without images due to upload error');
+    req.files = [];
+    next();
   }
 };

@@ -12,11 +12,11 @@ console.log('Cloudinary configured with cloud_name:', process.env.CLOUDINARY_CLO
 
 export const uploadToCloudinary = async (file: Express.Multer.File): Promise<string> => {
   try {
-    console.log('Starting Cloudinary upload for file:', file.originalname);
+    console.log('Starting Cloudinary upload for file:', file.originalname, 'mimetype:', file.mimetype);
     
-    // Use the simpler upload method with buffer
+    // Use the simpler upload method with buffer and correct mimetype
     const result = await cloudinary.uploader.upload(
-      `data:image/jpeg;base64,${file.buffer.toString('base64')}`,
+      `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
       {
         folder: 'job-images',
         resource_type: 'image'
@@ -26,7 +26,7 @@ export const uploadToCloudinary = async (file: Express.Multer.File): Promise<str
     console.log('Cloudinary upload successful:', result.secure_url);
     return result.secure_url;
   } catch (error) {
-    console.error('Cloudinary upload error:', error);
+    console.error('Cloudinary upload error for file:', file.originalname, error);
     throw error;
   }
 };
