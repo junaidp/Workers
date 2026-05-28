@@ -19,6 +19,7 @@ import creditRoutes from './routes/credit.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { verifyEmailConnection } from './utils/notifications.js';
 import { startJobMonitoring } from './services/jobMonitor.js';
+import { startKeepAlive } from './services/keepAlive.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -92,6 +93,7 @@ async function startServer() {
     await verifyEmailConnection();
 
     startJobMonitoring();
+    startKeepAlive();
     
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
