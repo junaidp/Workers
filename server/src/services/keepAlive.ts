@@ -26,7 +26,7 @@ export const startKeepAlive = () => {
 const pingServer = async () => {
   try {
     const response = await fetch(`${SERVER_URL}/api/health`);
-    const data = await response.json();
+    const data = await response.json() as { status: string; timestamp: string };
     console.log('✅ Keep-alive ping successful:', data.timestamp);
   } catch (error) {
     console.error('❌ Keep-alive ping failed:', error);
