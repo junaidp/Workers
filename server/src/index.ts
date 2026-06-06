@@ -69,6 +69,15 @@ if (!fs.existsSync(uploadsDir)) {
 app.use('/uploads', express.static(uploadsDir));
 console.log('Serving uploads from:', uploadsDir);
 
+// Serve frontend static files
+const clientDistPath = path.join(__dirname, '..', '..', 'client', 'dist');
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  console.log('Serving frontend from:', clientDistPath);
+} else {
+  console.warn('Frontend dist directory not found at:', clientDistPath);
+}
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/jobs', jobRoutes);
@@ -81,6 +90,18 @@ app.use('/api/credit', creditRoutes);
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Serve index.html for all non-API routes (SPA fallback)
+if (fs.existsSync(clientDistPath)) {
+  app.use((req, res, next) => {
+    // Don't handle API routes or uploads
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    // Serve index.html for all other routes
+    res.sendFile(path.join(clientDistPath, 'index.html'));
+  });
+}
 
 app.use(errorHandler);
 
